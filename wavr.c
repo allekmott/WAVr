@@ -14,7 +14,8 @@
 
 #define WAVR_VERSION "0.0.9_w2"
 #define WAV_SAMPLE_RATE 44100
-#define WAV_DURATION 20
+#define WAV_DURATION 10
+#define GEN_FREQ 1000
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);
@@ -77,7 +78,7 @@ int main(int argc, char *argv[]) {
 
 	/* generate sample chain */
 	printf("Generating samples...\n");
-	short *samples = fap_sig(1000, WAV_DURATION, WAV_SAMPLE_RATE);
+	short *samples = fap_sig(GEN_FREQ, WAV_DURATION, WAV_SAMPLE_RATE);
 	printf("Finished sample generation.\n");
 
 	printf("Writing to %s...\n", out_filename);
@@ -88,7 +89,15 @@ int main(int argc, char *argv[]) {
 	if (!sampleDump)
 		printf("Write complete, exiting.\n");
 	else {
+		int numSamples = WAV_DURATION * WAV_SAMPLE_RATE;
+		int curSample;
+		for (curSample = 0; curSample < numSamples; curSample++) {
+			printf("0x%x\t", samples[curSample]);
+			if (curSample % 10 == 0)
+				printf("\n");
+		}
 
+		printf("\n");
 	}
 
 	fclose(out_file);

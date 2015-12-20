@@ -42,7 +42,7 @@ short *fap_sig(int frequency, float duration, int sampleRate) {
 		/* time, relative to current sample */
 		float t = tStep * sample;
 
-		buffer[sample] = (short) sin((float) frequency * (2.0f * M_PI) * t);
+		buffer[sample] = (short) (10000.0f * sin((float) frequency * (2.0f * M_PI) * t));
 	}
 
 	return buffer;
