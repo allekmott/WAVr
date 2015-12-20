@@ -5,15 +5,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <math.h>
 #include <unistd.h>
 
 #include "wav.h"
 
-#define WAVR_VERSION "0.0.4"
+#define WAVR_VERSION "0.0.5"
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);
