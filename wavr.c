@@ -12,10 +12,8 @@
 #include "wav.h"
 #include "sigfapper.h"
 
-#define WAVR_VERSION "0.0.9_w2"
+#define WAVR_VERSION "0.1.0"
 #define WAV_SAMPLE_RATE 44100
-#define WAV_DURATION 10
-#define GEN_FREQ 1000
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);
@@ -30,11 +28,23 @@ int main(int argc, char *argv[]) {
 	extern int optind, optopt;
 
 	int sampleDump = 0;
+	float frequency = 1000.0f;
+	float duration = 1.0f;
 
-	while ((c = getopt(argc, argv, "o:d")) != -1) {
+	while ((c = getopt(argc, argv, "o:dt:f:")) != -1) {
 		switch (c) {
 			case 'o': out_filename = optarg; break;
 			case 'd': sampleDump = 1; break;
+			case 't':
+				duration = atof(optarg);
+				if (duration <= 0.0f)
+					usage(argv[0]);
+				break;
+			case 'f': 
+				frequency = atof(optarg);
+				if (frequency <= 0.0f)
+					usage(argv[0]);
+				break;
 			case '?': usage(argv[0]); break;
 		}
 	}
@@ -53,7 +63,7 @@ int main(int argc, char *argv[]) {
 	dataHeader = (struct DataHeader *)(formatHeader + 1);
 
 	/* prospected wav data size */
-	size_t dataSize = bytesize_gen(WAV_DURATION, WAV_SAMPLE_RATE);
+	size_t dataSize = bytesize_gen(duration, WAV_SAMPLE_RATE);
 
 	/* begin populating headers with values */
 
@@ -78,7 +88,7 @@ int main(int argc, char *argv[]) {
 
 	/* generate sample chain */
 	printf("Generating samples...\n");
-	short *samples = fap_sig(GEN_FREQ, WAV_DURATION, WAV_SAMPLE_RATE);
+	short *samples = fap_sig(frequency, duration, WAV_SAMPLE_RATE);
 	printf("Finished sample generation.\n");
 
 	printf("Writing to %s...\n", out_filename);
@@ -89,7 +99,7 @@ int main(int argc, char *argv[]) {
 	if (!sampleDump)
 		printf("Write complete, exiting.\n");
 	else {
-		int numSamples = WAV_DURATION * WAV_SAMPLE_RATE;
+		int numSamples = duration * WAV_SAMPLE_RATE;
 		int curSample;
 		for (curSample = 0; curSample < numSamples; curSample++) {
 			printf("0x%x\t", samples[curSample]);

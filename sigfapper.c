@@ -16,13 +16,13 @@ size_t bytesize_gen(float duration, int sampleRate) {
 	return (size_t) (bufferLength * sampleSize);
 }
 
-short *fap_sig(int frequency, float duration, int sampleRate) {
+short *fap_sig(float frequency, float duration, int sampleRate) {
 	int bufferSize = bytesize_gen(duration, sampleRate);
 
 	if (sampleRate < frequency * 2)
-		printf("WARNING: With frequency of %i Hz, sample rate should be at least %i Hz\n",
+		printf("WARNING: With frequency of %f Hz, sample rate should be at least %i Hz\n",
 			frequency,
-			frequency * 2);
+			(int) (frequency * 2));
 
 	short *buffer = malloc(sizeof(short) * bufferSize);
 	if (buffer == NULL) {
@@ -42,7 +42,7 @@ short *fap_sig(int frequency, float duration, int sampleRate) {
 		/* time, relative to current sample */
 		float t = tStep * sample;
 
-		buffer[sample] = (short) (10000.0f * sin((float) frequency * (2.0f * M_PI) * t));
+		buffer[sample] = (short) (10000.0f * sin(frequency * (2.0f * M_PI) * t));
 	}
 
 	return buffer;

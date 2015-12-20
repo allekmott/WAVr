@@ -13,7 +13,7 @@
  * duration (s)
  * sampleRate (Hz)
  */
-short *fap_sig(int frequency, float duration, int sampleRate);
+short *fap_sig(float frequency, float duration, int sampleRate);
 
 /* Calculate size of data segment (array of samples) to be generated.
  */
