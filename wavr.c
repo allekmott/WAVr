@@ -12,9 +12,9 @@
 #include "wav.h"
 #include "sigfapper.h"
 
-#define WAVR_VERSION "0.0.9_w1"
+#define WAVR_VERSION "0.0.9_w2"
 #define WAV_SAMPLE_RATE 44100
-#define WAV_LENGTH 20
+#define WAV_DURATION 20
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);
@@ -28,9 +28,12 @@ int main(int argc, char *argv[]) {
 	char *out_filename = "lol2.wav";
 	extern int optind, optopt;
 
-	while ((c = getopt(argc, argv, "o:")) != -1) {
+	int sampleDump = 0;
+
+	while ((c = getopt(argc, argv, "o:d")) != -1) {
 		switch (c) {
 			case 'o': out_filename = optarg; break;
+			case 'd': sampleDump = 1; break;
 			case '?': usage(argv[0]); break;
 		}
 	}
@@ -47,6 +50,9 @@ int main(int argc, char *argv[]) {
 	wavHeader = (struct WavHeader *)headerSpace;
 	formatHeader = (struct FormatHeader *)(wavHeader + 1);
 	dataHeader = (struct DataHeader *)(formatHeader + 1);
+
+	/* prospected wav data size */
+	size_t dataSize = bytesize_gen(WAV_DURATION, WAV_SAMPLE_RATE);
 
 	/* begin populating headers with values */
 
@@ -67,19 +73,23 @@ int main(int argc, char *argv[]) {
 
 	/* data-specific stuff */
 	strcpy(dataHeader->ChunkID, "data");
-	dataHeader->ChunkSize = WAV_LENGTH * WAV_SAMPLE_RATE * 2; /* lol */
-
+	dataHeader->ChunkSize = dataSize; /* lol */
 
 	/* generate sample chain */
 	printf("Generating samples...\n");
-	short *samples = fap_sig(1000, WAV_LENGTH, WAV_SAMPLE_RATE);
+	short *samples = fap_sig(1000, WAV_DURATION, WAV_SAMPLE_RATE);
 	printf("Finished sample generation.\n");
 
 	printf("Writing to %s...\n", out_filename);
 	FILE *out_file = fopen(out_filename, "w");
 	fwrite(headerSpace, fullHeaderSize, 1, out_file);
-	fwrite(samples, WAV_SAMPLE_RATE * WAV_LENGTH, 1, out_file);
-	printf("Write complete, exiting.\n");
+	fwrite(samples, dataSize, 1, out_file);
+
+	if (!sampleDump)
+		printf("Write complete, exiting.\n");
+	else {
+
+	}
 
 	fclose(out_file);
 	free(samples);

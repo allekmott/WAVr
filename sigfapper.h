@@ -3,6 +3,8 @@
  * Created: 20 Dec 2015
  */
 
+#include <stdlib.h>
+
 #ifndef _SIGFAPPER_H
 #define _SIGFAPPER_H
 
@@ -12,5 +14,6 @@
  * sampleRate (Hz)
  */
 short *fap_sig(int frequency, float duration, int sampleRate);
+size_t bytesize_gen(float duration, int sampleRate);
 
 #endif

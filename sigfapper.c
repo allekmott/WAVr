@@ -9,8 +9,15 @@
 
 #include "sigfapper.h"
 
+size_t bytesize_gen(float duration, int sampleRate) {
+	int bufferLength = duration * sampleRate;
+	int sampleSize = sizeof(short);
+
+	return (size_t) (bufferLength * sampleSize);
+}
+
 short *fap_sig(int frequency, float duration, int sampleRate) {
-	int bufferSize = duration * sampleRate;
+	int bufferSize = bytesize_gen(duration, sampleRate);
 
 	if (sampleRate < frequency * 2)
 		printf("WARNING: With frequency of %i Hz, sample rate should be at least %i Hz\n",
@@ -40,3 +47,4 @@ short *fap_sig(int frequency, float duration, int sampleRate) {
 
 	return buffer;
 }
+
