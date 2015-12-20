@@ -13,7 +13,7 @@
 
 #include "wav.h"
 
-#define WAVR_VERSION "0.0.3"
+#define WAVR_VERSION "0.0.4"
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);
@@ -33,5 +33,16 @@ int main(int argc, char *argv[]) {
 			case '?': usage(argv[0]); break;
 		}
 	}
+
+	struct WavHeader *wavHeader;
+	struct FormatHeader *formatHeader;
+	struct DataHeader *dataHeader;
+
+	void *headerSpace = malloc(sizeof(struct WavHeader)
+		+ sizeof(struct FormatHeader)
+		+ sizeof(struct DataHeader));
+	wavHeader = (struct WavHeader *)headerSpace;
+	formatHeader = (struct FormatHeader *)(wavHeader + 1);
+	dataHeader = (struct DataHeader *)(formatHeader + 1);
 
 }
