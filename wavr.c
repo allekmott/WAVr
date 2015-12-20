@@ -13,7 +13,7 @@
 
 #include "wav.h"
 
-#define WAVR_VERSION "0.0.2"
+#define WAVR_VERSION "0.0.3"
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);

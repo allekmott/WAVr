@@ -3,6 +3,8 @@
  * Created: 20 Dec 2014
  */
 
+#include <stdint.h>
+
 #ifndef _WAV_H
 #define _WAV_H
 
