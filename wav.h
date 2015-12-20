@@ -26,7 +26,7 @@ struct FormatHeader {
 };
 
 struct DataHeader {
-	char ChunkId[4];
+	char ChunkID[4];
 	uint32_t ChunkSize;
 };
 
