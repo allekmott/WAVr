@@ -12,7 +12,7 @@
 #include "wav.h"
 #include "sigfapper.h"
 
-#define WAVR_VERSION "0.0.8"
+#define WAVR_VERSION "0.0.9"
 #define WAV_SAMPLE_RATE 44100
 #define WAV_LENGTH 2
 
@@ -25,12 +25,12 @@ int main(int argc, char *argv[]) {
 	printf("WavR v%s\n", WAVR_VERSION);
 
 	int c;
-	char *out_file;
+	char *out_filename = "lol2.wav";
 	extern int optind, optopt;
 
 	while ((c = getopt(argc, argv, "o:")) != -1) {
 		switch (c) {
-			case 'o': out_file = optarg; break;
+			case 'o': out_filename = optarg; break;
 			case '?': usage(argv[0]); break;
 		}
 	}
@@ -67,7 +67,21 @@ int main(int argc, char *argv[]) {
 
 	/* data-specific stuff */
 	strcpy(dataHeader->ChunkID, "data");
-	dataHeader->ChunkSize = WAV_LENGTH * WAV_SAMPLE_RATE; /* lol */
+	dataHeader->ChunkSize = WAV_LENGTH * WAV_SAMPLE_RATE * 2; /* lol */
 
+
+	/* generate sample chain */
+	printf("Generating samples...\n");
+	short *samples = fap_sig(1000, WAV_LENGTH, WAV_SAMPLE_RATE);
+	printf("Finished sample generation.\n");
+
+	printf("Writing to %s...\n", out_filename);
+	FILE *out_file = fopen(out_filename, "w");
+	fwrite(headerSpace, fullHeaderSize, 1, out_file);
+	fwrite(samples, WAV_SAMPLE_RATE * WAV_LENGTH, 1, out_file);
+	printf("Write complete, exiting.\n");
+
+	fclose(out_file);
+	free(samples);
 	free(headerSpace);
 }

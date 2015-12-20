@@ -1,6 +1,6 @@
 /* wav.h
  * Wav structs & shit
- * Created: 20 Dec 2014
+ * Created: 20 Dec 2015
  */
 
 #include <stdint.h>
