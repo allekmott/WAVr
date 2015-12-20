@@ -12,9 +12,9 @@
 #include "wav.h"
 #include "sigfapper.h"
 
-#define WAVR_VERSION "0.0.9"
+#define WAVR_VERSION "0.0.9_w1"
 #define WAV_SAMPLE_RATE 44100
-#define WAV_LENGTH 2
+#define WAV_LENGTH 20
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);

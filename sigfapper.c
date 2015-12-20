@@ -18,6 +18,13 @@ short *fap_sig(int frequency, float duration, int sampleRate) {
 			frequency * 2);
 
 	short *buffer = malloc(sizeof(short) * bufferSize);
+	if (buffer == NULL) {
+		fprintf(stderr, "Unable to allocate memory for sample buffer\n"
+			"\tDesired buffer size: %ib\n", bufferSize);
+		exit(1);
+	}
+
+
 	int sample;
 
 	/* time delta per sample */
