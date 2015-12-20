@@ -1,6 +1,7 @@
 /* wavr.c
  * Main thingy
  * 5p4wn wav file
+ * Created: 20 Dec 2015
  */
 
 #include <stdio.h>
@@ -9,8 +10,9 @@
 #include <string.h>
 
 #include "wav.h"
+#include "sigfapper.h"
 
-#define WAVR_VERSION "0.0.7"
+#define WAVR_VERSION "0.0.8"
 #define WAV_SAMPLE_RATE 44100
 #define WAV_LENGTH 2
 
