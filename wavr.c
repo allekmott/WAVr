@@ -12,8 +12,7 @@
 #include "wav.h"
 #include "sigfapper.h"
 
-#define WAVR_VERSION "0.1.0"
-#define WAV_SAMPLE_RATE 44100
+#define WAVR_VERSION "0.1.1"
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);
@@ -28,23 +27,55 @@ int main(int argc, char *argv[]) {
 	extern int optind, optopt;
 
 	int sampleDump = 0;
+
+	int sampleRate = 41000;
 	float frequency = 1000.0f;
 	float duration = 1.0f;
 
-	while ((c = getopt(argc, argv, "o:dt:f:")) != -1) {
+	while ((c = getopt(argc, argv, "o:dt:f:ls:")) != -1) {
 		switch (c) {
+			/* set output filename */
 			case 'o': out_filename = optarg; break;
+			
+			/* dump samples after generation */
 			case 'd': sampleDump = 1; break;
+
+			/* set duration of waveform */
 			case 't':
 				duration = atof(optarg);
 				if (duration <= 0.0f)
 					usage(argv[0]);
 				break;
+
+			/* set frequency of waveform */	
 			case 'f': 
 				frequency = atof(optarg);
 				if (frequency <= 0.0f)
 					usage(argv[0]);
 				break;
+
+			/* set waveform sample rate */
+			case 's':
+				sampleRate = atoi(optarg);
+				if (sampleRate == 44100 ||
+					sampleRate == 48000 ||
+					sampleRate == 88200 ||
+					sampleRate == 96000)
+						break;
+				else
+					printf("Invalid sample rate: %i Hz\n", sampleRate);
+
+			/* list available sample rates */
+			case 'l':
+				printf("Available sample rates:\n\n"
+					"44,100 Hz (44.1 kHz)\n"
+					"48,000 Hz (48.0 kHz)\n"
+					"88,200 Hz (88.2 kHz)\n"
+					"96,000 Hz (96.0 kHz)\n");
+				exit(0);
+				break;
+
+			/* wtf */
 			case '?': usage(argv[0]); break;
 		}
 	}
@@ -63,7 +94,7 @@ int main(int argc, char *argv[]) {
 	dataHeader = (struct DataHeader *)(formatHeader + 1);
 
 	/* prospected wav data size */
-	size_t dataSize = bytesize_gen(duration, WAV_SAMPLE_RATE);
+	size_t dataSize = bytesize_gen(duration, sampleRate);
 
 	/* begin populating headers with values */
 
@@ -77,10 +108,10 @@ int main(int argc, char *argv[]) {
 	formatHeader->ChunkSize = 16;
 	formatHeader->CompressionCode = 1;
 	formatHeader->Channels = 1;
-	formatHeader->SampleRate = (uint32_t) WAV_SAMPLE_RATE; /* lol */
+	formatHeader->SampleRate = (uint32_t) sampleRate; /* lol */
 	formatHeader->SigBitsPerSamp = 16;
 	formatHeader->BlockAlign = 2;
-	formatHeader->AvgBytesPerSec = formatHeader->BlockAlign * WAV_SAMPLE_RATE;
+	formatHeader->AvgBytesPerSec = formatHeader->BlockAlign * sampleRate;
 
 	/* data-specific stuff */
 	strcpy(dataHeader->ChunkID, "data");
@@ -88,7 +119,7 @@ int main(int argc, char *argv[]) {
 
 	/* generate sample chain */
 	printf("Generating samples...\n");
-	short *samples = fap_sig(frequency, duration, WAV_SAMPLE_RATE);
+	short *samples = fap_sig(frequency, duration, sampleRate);
 	printf("Finished sample generation.\n");
 
 	printf("Writing to %s...\n", out_filename);
@@ -99,7 +130,7 @@ int main(int argc, char *argv[]) {
 	if (!sampleDump)
 		printf("Write complete, exiting.\n");
 	else {
-		int numSamples = duration * WAV_SAMPLE_RATE;
+		int numSamples = duration * sampleRate;
 		int curSample;
 		for (curSample = 0; curSample < numSamples; curSample++) {
 			printf("0x%x\t", samples[curSample]);
