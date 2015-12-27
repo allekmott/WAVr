@@ -12,7 +12,7 @@
 #include "wav.h"
 #include "sigfapper.h"
 
-#define WAVR_VERSION "0.1.1"
+#define WAVR_VERSION "0.1.2"
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);
@@ -20,7 +20,7 @@ void usage(const char *cmd) {
 }
 
 int main(int argc, char *argv[]) {
-	printf("WavR v%s\n", WAVR_VERSION);
+	printf("WAVr v%s\n", WAVR_VERSION);
 
 	int c;
 	char *out_filename = "lol2.wav";
