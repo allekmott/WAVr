@@ -1,11 +1,11 @@
 CC=gcc
-CFLAGS=
+CFLAGS=-lm
 
 EXE=wavr
 
-DEPS=sigfapper.h wav.h
+DEPS=samplegen.h wav.h
 
-OBJ_DEPS=sigfapper.o wavr.o
+OBJ_DEPS=samplegen.o wavr.o
 
 %.o: $.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)

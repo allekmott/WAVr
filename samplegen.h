@@ -8,12 +8,12 @@
 #ifndef _SIGFAPPER_H
 #define _SIGFAPPER_H
 
-/* Fap (generate) a signal with
+/* Generate signal with
  * frequency (Hz)
  * duration (s)
  * sampleRate (Hz)
  */
-short *fap_sig(float frequency, float duration, int sampleRate);
+short *gen_sig(float frequency, float duration, int sampleRate);
 
 /* Calculate size of data segment (array of samples) to be generated.
  */

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "sigfapper.h"
+#include "samplegen.h"
 
 size_t bytesize_gen(float duration, int sampleRate) {
 	int bufferLength = duration * sampleRate;
@@ -16,7 +16,7 @@ size_t bytesize_gen(float duration, int sampleRate) {
 	return (size_t) (bufferLength * sampleSize);
 }
 
-short *fap_sig(float frequency, float duration, int sampleRate) {
+short *gen_sig(float frequency, float duration, int sampleRate) {
 	int bufferSize = bytesize_gen(duration, sampleRate);
 
 	if (sampleRate < frequency * 2)

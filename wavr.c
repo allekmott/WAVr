@@ -10,9 +10,9 @@
 #include <string.h>
 
 #include "wav.h"
-#include "sigfapper.h"
+#include "samplegen.h"
 
-#define WAVR_VERSION "0.1.2"
+#define WAVR_VERSION "0.1.3"
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 
 	/* generate sample chain */
 	printf("Generating samples...\n");
-	short *samples = fap_sig(frequency, duration, sampleRate);
+	short *samples = gen_sig(frequency, duration, sampleRate);
 	printf("Finished sample generation.\n");
 
 	printf("Writing to %s...\n", out_filename);
