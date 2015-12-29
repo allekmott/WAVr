@@ -1,5 +1,5 @@
-/* sigfapper.c
- * Faps a sig
+/* samplegen.h
+ * Mathematically generates signals
  * Created: 20 Dec 2015
  */
 
