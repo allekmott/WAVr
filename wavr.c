@@ -16,6 +16,21 @@
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);
+}
+
+void help(const char *cmd) {
+	usage(cmd);
+
+	printf("Flags: \n"
+		"-o <out_file>\t\tOutput wav to <out_file>\n"
+		"-d\t\t\tDump samples to standard out (skip wav formatting)\n"
+		"-t <duration>\t\tSet signal length to <duration> (s)\n"
+		"-f <frequency>\t\tSet signal frequency to <frequency> Hz\n"
+		"-s <sampleRate>\t\tSet signal sample rate to <sampleRate> Hz\n"
+		"-l\t\t\tList available sample rates\n"
+		"-i\t\t\tInput samples from standard input\n"
+		"-h\t\t\tWhat you just did\n");
+
 	exit(0);
 }
 
@@ -27,17 +42,20 @@ int main(int argc, char *argv[]) {
 	extern int optind, optopt;
 
 	int sampleDump = 0;
+	int sampleCLI = 0;
 
 	int sampleRate = 41000;
 	float frequency = 1000.0f;
 	float duration = 1.0f;
 
-	while ((c = getopt(argc, argv, "o:dt:f:ls:")) != -1) {
+	while ((c = getopt(argc, argv, "o:dt:f:ls:ih")) != -1) {
 		switch (c) {
 			/* set output filename */
 			case 'o': out_filename = optarg; break;
 			
-			/* dump samples after generation */
+			/* dump samples directly to command line
+			 * completely bypasses wav formatting
+			 */
 			case 'd': sampleDump = 1; break;
 
 			/* set duration of waveform */
@@ -45,6 +63,7 @@ int main(int argc, char *argv[]) {
 				duration = atof(optarg);
 				if (duration <= 0.0f)
 					usage(argv[0]);
+					exit(0);
 				break;
 
 			/* set frequency of waveform */	
@@ -52,6 +71,7 @@ int main(int argc, char *argv[]) {
 				frequency = atof(optarg);
 				if (frequency <= 0.0f)
 					usage(argv[0]);
+					exit(0);
 				break;
 
 			/* set waveform sample rate */
@@ -75,8 +95,16 @@ int main(int argc, char *argv[]) {
 				exit(0);
 				break;
 
+			/* input sample values from stdin */
+			case 'i':
+				printf("Parsing samples from standard input\n");
+				sampleCLI = 1;
+				break;
+
+			case 'h': help(argv[0]); break;
+
 			/* wtf */
-			case '?': usage(argv[0]); break;
+			case '?': usage(argv[0]); exit(0); break;
 		}
 	}
 
