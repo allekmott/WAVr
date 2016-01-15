@@ -13,7 +13,7 @@
 #include "wavr.h"
 #include "signal.h"
 
-#define WAVR_VERSION "0.1.3"
+#define WAVR_VERSION "0.1.4"
 
 int main(int argc, char *argv[]) {
 	printf("WAVr v%s\n", WAVR_VERSION);
@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 	} else {
 		/* Generate samples */
 		printf("Generating samples...\n");
-		samples = gen_sig(&sigspec);
+		samples = gen_sig(&sigspec, samplegen_sine);
 		printf("Finished sample generation.\n");
 	}
 

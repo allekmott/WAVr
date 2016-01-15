@@ -11,12 +11,25 @@
 #ifndef SIGNAL_H
 #define SIGNAL_H
 
+/* Data structure to store sample information
+ * Keeps track of sample's position in signal
+ */
+struct sample {
+	float t;
+	struct signal_spec *sigspec;
+	short *data;
+};
+
 /* Generate signal with
  * frequency (Hz)
  * duration (s)
  * sampleRate (Hz)
  */
-short *gen_sig(struct signal_spec *sigspec);
+short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *));
+
+/* Generate samples with sinusoidal function
+ */
+void samplegen_sine(struct sample *sample);
 
 /* Parse signal from provided input file
  * (stdin by default)

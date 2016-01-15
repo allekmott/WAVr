@@ -17,7 +17,7 @@ size_t bytesize_gen(struct signal_spec *sigspec) {
 	return (bufferLength * sampleSize);
 }
 
-short *gen_sig(struct signal_spec *sigspec) {
+short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *)) {
 	int bufferSize = bytesize_gen(sigspec);
 
 	if (sigspec->sample_rate < sigspec->frequency * 2)
@@ -33,20 +33,30 @@ short *gen_sig(struct signal_spec *sigspec) {
 	}
 
 
-	int sample;
+	int sampleNo;
 
 	/* time delta per sample */
 	float tStep = 1.0f / (float) sigspec->sample_rate;
 
-	/* gen dat sine */
-	for (sample = 0; sample < bufferSize; sample++) {
-		/* time, relative to current sample */
-		float t = tStep * sample;
+	/* create sample struct */
+	struct sample sample;
+	sample.sigspec = sigspec;
 
-		buffer[sample] = (short) (10000.0f * sin(sigspec->frequency * (2.0f * M_PI) * t));
+	/* gen dat sine */
+	for (sampleNo = 0; sampleNo < bufferSize; sampleNo++) {
+		/* time, relative to current sample */
+		float t = tStep * sampleNo;
+		
+		sample.t = t;
+		sample.data = &(buffer[sampleNo]);
+		samplegen(&sample);
 	}
 
 	return buffer;
+}
+
+void samplegen_sine(struct sample *sample) {
+	*(sample->data) = (short) (10000.0f * sin(sample->sigspec->frequency * (2.0f * M_PI) * sample->t));
 }
 
 short *parse_sig(struct signal_spec *sigspec, FILE *in) {
