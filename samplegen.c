@@ -11,10 +11,10 @@
 #include "samplegen.h"
 
 size_t bytesize_gen(struct signal_spec *sigspec) {
-	int bufferLength = sigspec->duration * sigspec->sample_rate;
-	int sampleSize = sizeof(short);
+	size_t bufferLength = sigspec->duration * sigspec->sample_rate;
+	size_t sampleSize = sizeof(short);
 
-	return (size_t) (bufferLength * sampleSize);
+	return (bufferLength * sampleSize);
 }
 
 short *gen_sig(struct signal_spec *sigspec) {
@@ -25,7 +25,7 @@ short *gen_sig(struct signal_spec *sigspec) {
 			sigspec->frequency,
 			(int) (sigspec->frequency * 2));
 
-	short *buffer = malloc(bufferSize);
+	short *buffer = malloc(sizeof(short) * bufferSize);
 	if (buffer == NULL) {
 		fprintf(stderr, "Unable to allocate memory for sample buffer\n"
 			"\tDesired buffer size: %ib\n", bufferSize);

@@ -25,7 +25,7 @@ FILE *init_wav_file(char *filename, struct signal_spec *sigspec) {
 	dataHeader = (struct DataHeader *)(formatHeader + 1);
 
 	/* prospected wav data size */
-	size_t dataSize = bytesize_gen(sigspec->duration, sigspec->sample_rate);
+	size_t dataSize = bytesize_gen(sigspec);
 
 	/* begin populating headers with values */
 

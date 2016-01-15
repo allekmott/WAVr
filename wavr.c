@@ -15,8 +15,6 @@
 
 #define WAVR_VERSION "0.1.3"
 
-
-
 int main(int argc, char *argv[]) {
 	printf("WAVr v%s\n", WAVR_VERSION);
 
@@ -32,14 +30,23 @@ int main(int argc, char *argv[]) {
 
 	handle_args(&args, argc, argv);
 	
-	/* generate sample chain */
-	printf("Generating samples...\n");
-	short *samples = gen_sig(&sigspec);
-	printf("Finished sample generation.\n");
+	short *samples;
+
+	if (args.sample_stdin) {
+		/* Parse samples from stdin */
+		printf("Reading samples in from stdin...\n");
+		exit(1);
+	} else {
+		/* Generate samples */
+		printf("Generating samples...\n");
+		samples = gen_sig(&sigspec);
+		printf("Finished sample generation.\n");
+	}
 
 	printf("Writing to %s...\n", args.out_filename);
 	FILE *out_file = init_wav_file(args.out_filename, &sigspec);
 
+	//printf("File opened\n");
 	size_t dataSize = bytesize_gen(&sigspec);
 	fwrite(samples, dataSize, 1, out_file);
 
@@ -57,8 +64,8 @@ int main(int argc, char *argv[]) {
 		printf("\n");
 	}
 
-	fclose(out_file);
 	free(samples);
+	fclose(out_file);
 }
 
 void usage(const char *cmd) {
