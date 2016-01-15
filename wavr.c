@@ -11,7 +11,7 @@
 
 #include "wav.h"
 #include "wavr.h"
-#include "samplegen.h"
+#include "signal.h"
 
 #define WAVR_VERSION "0.1.3"
 
@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
 	if (args.sample_stdin) {
 		/* Parse samples from stdin */
 		printf("Reading samples in from stdin...\n");
+		samples = parse_sig(&sigspec, stdin);
 		exit(1);
 	} else {
 		/* Generate samples */

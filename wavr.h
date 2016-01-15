@@ -1,6 +1,7 @@
 /* wavr.h
  * Declares argument struct and all argument
  * handling functions.
+ * Created: 14 January 2016
  */
 
 #include "wav.h"

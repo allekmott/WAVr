@@ -3,9 +3,9 @@ CFLAGS=-lm
 
 EXE=wavr
 
-DEPS=samplegen.h wavr.h wav.h
+DEPS=signal.h wavr.h wav.h
 
-OBJ_DEPS=samplegen.o wavr.o wav.o
+OBJ_DEPS=signal.o wavr.o wav.o
 
 %.o: $.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)

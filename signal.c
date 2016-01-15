@@ -1,4 +1,4 @@
-/* samplegen.c
+/* signal.c
  * Mathematically generates signals
  * Created: 20 Dec 2015
  */
@@ -8,7 +8,7 @@
 #include <math.h>
 
 #include "wav.h"
-#include "samplegen.h"
+#include "signal.h"
 
 size_t bytesize_gen(struct signal_spec *sigspec) {
 	size_t bufferLength = sigspec->duration * sigspec->sample_rate;
@@ -49,3 +49,6 @@ short *gen_sig(struct signal_spec *sigspec) {
 	return buffer;
 }
 
+short *parse_sig(struct signal_spec *sigspec, FILE *in) {
+	return NULL;
+}
