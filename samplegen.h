@@ -5,18 +5,20 @@
 
 #include <stdlib.h>
 
-#ifndef _SIGFAPPER_H
-#define _SIGFAPPER_H
+#include "wav.h"
+
+#ifndef SAMPLEGEN_H
+#define SAMPLEGEN_H
 
 /* Generate signal with
  * frequency (Hz)
  * duration (s)
  * sampleRate (Hz)
  */
-short *gen_sig(float frequency, float duration, int sampleRate);
+short *gen_sig(struct signal_spec *sigspec);
 
 /* Calculate size of data segment (array of samples) to be generated.
  */
-size_t bytesize_gen(float duration, int sampleRate);
+size_t bytesize_gen(struct signal_spec *sigspec);
 
 #endif

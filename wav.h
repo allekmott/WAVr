@@ -3,10 +3,11 @@
  * Created: 20 Dec 2015
  */
 
+#include <stdio.h>
 #include <stdint.h>
 
-#ifndef _WAV_H
-#define _WAV_H
+#ifndef WAV_H
+#define WAV_H
 
 struct WavHeader {
 	char ChunkID[4];
@@ -29,5 +30,13 @@ struct DataHeader {
 	char ChunkID[4];
 	uint32_t ChunkSize;
 };
+
+struct signal_spec {
+	int sample_rate;
+	float frequency;
+	float duration;
+};
+
+FILE *init_wav_file(char *filename, struct signal_spec *sigspec);
 
 #endif

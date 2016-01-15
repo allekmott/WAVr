@@ -7,24 +7,25 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "wav.h"
 #include "samplegen.h"
 
-size_t bytesize_gen(float duration, int sampleRate) {
-	int bufferLength = duration * sampleRate;
+size_t bytesize_gen(struct signal_spec *sigspec) {
+	int bufferLength = sigspec->duration * sigspec->sample_rate;
 	int sampleSize = sizeof(short);
 
 	return (size_t) (bufferLength * sampleSize);
 }
 
-short *gen_sig(float frequency, float duration, int sampleRate) {
-	int bufferSize = bytesize_gen(duration, sampleRate);
+short *gen_sig(struct signal_spec *sigspec) {
+	int bufferSize = bytesize_gen(sigspec);
 
-	if (sampleRate < frequency * 2)
+	if (sigspec->sample_rate < sigspec->frequency * 2)
 		printf("WARNING: With frequency of %f Hz, sample rate should be at least %i Hz\n",
-			frequency,
-			(int) (frequency * 2));
+			sigspec->frequency,
+			(int) (sigspec->frequency * 2));
 
-	short *buffer = malloc(sizeof(short) * bufferSize);
+	short *buffer = malloc(bufferSize);
 	if (buffer == NULL) {
 		fprintf(stderr, "Unable to allocate memory for sample buffer\n"
 			"\tDesired buffer size: %ib\n", bufferSize);
@@ -35,14 +36,14 @@ short *gen_sig(float frequency, float duration, int sampleRate) {
 	int sample;
 
 	/* time delta per sample */
-	float tStep = 1.0f / (float) sampleRate;
+	float tStep = 1.0f / (float) sigspec->sample_rate;
 
 	/* gen dat sine */
 	for (sample = 0; sample < bufferSize; sample++) {
 		/* time, relative to current sample */
 		float t = tStep * sample;
 
-		buffer[sample] = (short) (10000.0f * sin(frequency * (2.0f * M_PI) * t));
+		buffer[sample] = (short) (10000.0f * sin(sigspec->frequency * (2.0f * M_PI) * t));
 	}
 
 	return buffer;
