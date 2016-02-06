@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "wav.h"
+#include "signal.h"
 
 FILE *init_wav_file(char *filename, struct signal_spec *sigspec) {
 	int fullHeaderSize = sizeof(struct WavHeader)

@@ -40,4 +40,7 @@ short *parse_sig(struct signal_spec *sigspec, FILE *in);
  */
 size_t bytesize_gen(struct signal_spec *sigspec);
 
+/* Dump raw samples to standard output */
+void sample_dump(short *buffer, struct signal_spec *sigspec);
+
 #endif

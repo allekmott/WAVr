@@ -44,29 +44,19 @@ int main(int argc, char *argv[]) {
 		printf("Finished sample generation.\n");
 	}
 
-	printf("Writing to %s...\n", args.out_filename);
-	FILE *out_file = init_wav_file(args.out_filename, &sigspec);
+	if (!args.sample_dump) {
+		printf("Writing to %s...\n", args.out_filename);
+		FILE *out_file = init_wav_file(args.out_filename, &sigspec);
 
-	//printf("File opened\n");
-	size_t dataSize = bytesize_gen(&sigspec);
-	fwrite(samples, dataSize, 1, out_file);
-
-	if (!args.sample_dump)
-		printf("Write complete, exiting.\n");
-	else {
-		int numSamples = sigspec.duration * sigspec.sample_rate;
-		int curSample;
-		for (curSample = 0; curSample < numSamples; curSample++) {
-			printf("0x%x\t", samples[curSample]);
-			if (curSample % 10 == 0)
-				printf("\n");
-		}
-
-		printf("\n");
+		//printf("File opened\n");
+		size_t dataSize = bytesize_gen(&sigspec);
+		fwrite(samples, dataSize, 1, out_file);
+		fclose(out_file);
+	} else {
+		sample_dump(samples, &sigspec);	
 	}
 
 	free(samples);
-	fclose(out_file);
 }
 
 void usage(const char *cmd) {
@@ -106,9 +96,10 @@ void handle_args(struct wavr_args *args, int argc, char *argv[]) {
 			/* set duration of waveform */
 			case 't':
 				args->sigspec->duration = atof(optarg);
-				if (args->sigspec->duration <= 0.0f)
+				if (args->sigspec->duration <= 0.0f) {
 					usage(argv[0]);
 					exit(0);
+				}
 				break;
 
 			/* set frequency of waveform */	

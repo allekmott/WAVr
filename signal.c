@@ -62,3 +62,12 @@ void samplegen_sine(struct sample *sample) {
 short *parse_sig(struct signal_spec *sigspec, FILE *in) {
 	return NULL;
 }
+
+void sample_dump(short *buffer, struct signal_spec *sigspec) {
+	int numSamples = sigspec->duration * sigspec->sample_rate;
+	int curSample;
+	for (curSample = 0; curSample < numSamples; curSample++)
+		printf("%s", (char *) &(buffer[curSample]));
+
+	printf("\n");
+}
