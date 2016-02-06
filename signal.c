@@ -17,22 +17,31 @@ size_t bytesize_gen(struct signal_spec *sigspec) {
 	return (bufferLength * sampleSize);
 }
 
-short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *)) {
-	int bufferSize = bytesize_gen(sigspec);
+short *alloc_buffer(struct signal_spec *sigspec) {
+	short *buffer;
+	size_t bufferSize = bytesize_gen(sigspec);
 
+	buffer = malloc(sizeof(short) * bufferSize);
+
+	if (buffer == NULL) {
+		fprintf(stderr, "Unable to allocate memory for sample buffer\n"
+			"\tDesired buffer size: %zub\n", bufferSize);
+		exit(1);
+	}
+
+
+	return buffer;
+}
+
+short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *)) {
+	/* Check for valid frequency/sampleRate ratio */
 	if (sigspec->sample_rate < sigspec->frequency * 2)
 		printf("WARNING: With frequency of %f Hz, sample rate should be at least %i Hz\n",
 			sigspec->frequency,
 			(int) (sigspec->frequency * 2));
 
-	short *buffer = malloc(sizeof(short) * bufferSize);
-	if (buffer == NULL) {
-		fprintf(stderr, "Unable to allocate memory for sample buffer\n"
-			"\tDesired buffer size: %ib\n", bufferSize);
-		exit(1);
-	}
-
-
+	short *buffer = alloc_buffer(sigspec);
+	size_t bufferSize = bytesize_gen(sigspec);
 	int sampleNo;
 
 	/* time delta per sample */
@@ -60,14 +69,29 @@ void samplegen_sine(struct sample *sample) {
 }
 
 short *parse_sig(struct signal_spec *sigspec, FILE *in) {
-	return NULL;
+	size_t bufferSize = bytesize_gen(sigspec);
+	short *buffer = alloc_buffer(sigspec);
+
+	/* wonky pointer shite */
+	char *charBuffer = (char *) buffer;
+
+	int curByte;
+	for (curByte = 0; curByte < bufferSize; curByte++)
+		fscanf(in, "%c", &charBuffer[curByte]);
+
+	return buffer;
 }
 
 void sample_dump(short *buffer, struct signal_spec *sigspec) {
-	int numSamples = sigspec->duration * sigspec->sample_rate;
-	int curSample;
-	for (curSample = 0; curSample < numSamples; curSample++)
-		printf("%s", (char *) &(buffer[curSample]));
+	int curByte;
+
+	size_t bufferSize = bytesize_gen(sigspec);
+
+	/* wonky pointer shite */
+	char *charBuffer = (char *) buffer;
+
+	for (curByte = 0; curByte < bufferSize; curByte++)
+		printf("%c", charBuffer[curByte]);
 
 	printf("\n");
 }

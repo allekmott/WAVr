@@ -36,7 +36,6 @@ int main(int argc, char *argv[]) {
 		/* Parse samples from stdin */
 		printf("Reading samples in from stdin...\n");
 		samples = parse_sig(&sigspec, stdin);
-		exit(1);
 	} else {
 		/* Generate samples */
 		printf("Generating samples...\n");
