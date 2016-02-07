@@ -17,8 +17,7 @@
 struct wavr_args {
 	char *out_filename;
 	int sample_dump;
-	int sample_stdin;
-	struct signal_spec *sigspec;
+	int sample_stdin;	struct signal_spec *sigspec;
 };
 
 void usage(const char *cmd);

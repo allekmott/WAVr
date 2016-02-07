@@ -112,9 +112,10 @@ void handle_args(struct wavr_args *args, int argc, char *argv[]) {
 			/* set frequency of waveform */	
 			case 'f': 
 				args->sigspec->frequency = atof(optarg);
-				if (args->sigspec->frequency <= 0.0f)
+				if (args->sigspec->frequency <= 0.0f) {
 					usage(argv[0]);
 					exit(0);
+				}
 				break;
 
 			/* set waveform sample rate */
