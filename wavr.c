@@ -16,8 +16,6 @@
 #define WAVR_VERSION "0.1.4"
 
 int main(int argc, char *argv[]) {
-	printf("WAVr v%s\n", WAVR_VERSION);
-
 	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,
 		DEFAULT_SIGNAL_FREQUENCY,
 		DEFAULT_SIGNAL_DURATION};
@@ -30,17 +28,27 @@ int main(int argc, char *argv[]) {
 
 	handle_args(&args, argc, argv);
 	
+	if (!args.sample_dump)
+		printf("WAVr v%s\n", WAVR_VERSION);
+	
 	short *samples;
 
 	if (args.sample_stdin) {
 		/* Parse samples from stdin */
-		printf("Reading samples in from stdin...\n");
+		if (!args.sample_dump)
+			printf("Reading samples in from stdin...\n");
+		
 		samples = parse_sig(&sigspec, stdin);
 	} else {
 		/* Generate samples */
-		printf("Generating samples...\n");
+
+		if (!args.sample_dump)
+			printf("Generating samples...\n");
+		
 		samples = gen_sig(&sigspec, samplegen_sine);
-		printf("Finished sample generation.\n");
+		
+		if (!args.sample_dump)
+			printf("Finished sample generation.\n");
 	}
 
 	if (!args.sample_dump) {
@@ -134,7 +142,7 @@ void handle_args(struct wavr_args *args, int argc, char *argv[]) {
 
 			/* input sample values from stdin */
 			case 'i':
-				printf("Parsing samples from standard input\n");
+				/*printf("Parsing samples from standard input\n");*/
 				args->sample_stdin = 1;
 				break;
 
