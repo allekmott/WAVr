@@ -14,10 +14,18 @@
 #define DEFAULT_SIGNAL_DURATION 1.0f
 #define DEFAULT_OUTFILE "wavrgen.wav"
 
+enum input_method {
+	INPUT_NONE, /* => sample generation */
+	INPUT_STDIN,
+	INPUT_FILE
+};
+
 struct wavr_args {
+	char *in_filename;
 	char *out_filename;
 	int sample_dump;
-	int sample_stdin;	struct signal_spec *sigspec;
+	enum input_method input;
+	struct signal_spec *sigspec;
 };
 
 void usage(const char *cmd);

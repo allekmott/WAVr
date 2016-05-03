@@ -37,6 +37,19 @@ struct signal_spec {
 	float duration;
 };
 
+/* pool everything together into singular struct;
+ * make reading wav's in easy
+ */
+struct WavFile {
+	struct WavHeader *wavHeader;
+	struct FormatHeader *formatHeader;
+	struct DataHeader *dataHeader;
+	short *data;
+};
+
 FILE *init_wav_file(char *filename, struct signal_spec *sigspec);
+
+struct WavFile *read_wav_file(char *filename);
+void sigspec_from_wav(struct WavFile *wav, struct signal_spec *sigspec);
 
 #endif

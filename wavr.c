@@ -13,7 +13,7 @@
 #include "wavr.h"
 #include "signal.h"
 
-#define WAVR_VERSION "0.1.4"
+#define WAVR_VERSION "0.2.0"
 
 int main(int argc, char *argv[]) {
 	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,
@@ -21,38 +21,50 @@ int main(int argc, char *argv[]) {
 		DEFAULT_SIGNAL_DURATION};
 
 	struct wavr_args args;
+	/* args.in_filename only initialized if necessary */
 	args.out_filename = DEFAULT_OUTFILE;
 	args.sample_dump = 0;
-	args.sample_stdin = 0;
+	args.input = INPUT_NONE; /* generate samples by default */
 	args.sigspec = &sigspec;
 
+	struct WavFile *wav;
+
 	handle_args(&args, argc, argv);
-	
+
 	if (!args.sample_dump)
 		printf("WAVr v%s\n", WAVR_VERSION);
-	
+
 	short *samples;
 
-	if (args.sample_stdin) {
-		/* Parse samples from stdin */
-		if (!args.sample_dump)
-			printf("Reading samples in from stdin...\n");
-		
-		samples = parse_sig(&sigspec, stdin);
-	} else {
-		/* Generate samples */
-
-		if (!args.sample_dump)
-			printf("Generating samples...\n");
-		
-		samples = gen_sig(&sigspec, samplegen_sine);
-		
-		if (!args.sample_dump)
-			printf("Finished sample generation.\n");
+	switch (args.input) {
+		case INPUT_NONE:
+			/* Generate samples */
+			if (!args.sample_dump)
+				printf("\nGenerating samples...\n");
+			
+			samples = gen_sig(&sigspec, samplegen_sine);
+			
+			if (!args.sample_dump)
+				printf("Finished sample generation.\n");
+			break;
+		case INPUT_STDIN:
+			/* Parse samples from stdin */
+			if (!args.sample_dump)
+				printf("Reading samples in from stdin...\n");
+			
+			samples = parse_sig(&sigspec, stdin);
+			break;
+		case INPUT_FILE:
+			/* Pull samples from input file */
+			wav = read_wav_file(args.in_filename);
+			samples = wav->data;
+			sigspec_from_wav(wav, &sigspec);
+			break;
+		default: break; /* lol? */
 	}
 
 	if (!args.sample_dump) {
-		printf("Writing to %s...\n", args.out_filename);
+		printf("\nWriting to %s...\n", args.out_filename);
 		FILE *out_file = init_wav_file(args.out_filename, &sigspec);
 
 		//printf("File opened\n");
@@ -63,6 +75,15 @@ int main(int argc, char *argv[]) {
 		sample_dump(samples, &sigspec);	
 	}
 
+	
+	/* cleanup */
+	if (args.input == INPUT_FILE) {
+		/* only allocates these in case of file input */
+		free(wav->wavHeader);
+		free(wav->formatHeader);
+		free(wav->dataHeader);
+		free(wav);
+	}
 	free(samples);
 }
 
@@ -90,7 +111,7 @@ void handle_args(struct wavr_args *args, int argc, char *argv[]) {
 	int c;
 	extern int optind, optopt;
 
-	while ((c = getopt(argc, argv, "o:dt:f:ls:ih")) != -1) {
+	while ((c = getopt(argc, argv, "o:dt:f:ls:i:ch")) != -1) {
 		switch (c) {
 			/* set output filename */
 			case 'o': args->out_filename = optarg; break;
@@ -141,10 +162,15 @@ void handle_args(struct wavr_args *args, int argc, char *argv[]) {
 				exit(0);
 				break;
 
-			/* input sample values from stdin */
 			case 'i':
+				args->input = INPUT_FILE;
+				args->in_filename = optarg;
+				break;
+
+			/* input sample values from stdin */
+			case 'c':
 				/*printf("Parsing samples from standard input\n");*/
-				args->sample_stdin = 1;
+				args->input = INPUT_STDIN;
 				break;
 
 			case 'h': help(argv[0]); break;
