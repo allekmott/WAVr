@@ -21,7 +21,7 @@ short *alloc_buffer(struct signal_spec *sigspec) {
 	short *buffer;
 	size_t bufferSize = bytesize_gen(sigspec);
 
-	buffer = malloc(sizeof(short) * bufferSize);
+	buffer = malloc(bufferSize);
 
 	if (buffer == NULL) {
 		fprintf(stderr, "Unable to allocate memory for sample buffer\n"

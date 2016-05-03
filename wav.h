@@ -47,7 +47,11 @@ struct WavFile {
 	short *data;
 };
 
-FILE *init_wav_file(char *filename, struct signal_spec *sigspec);
+struct WavFile *empty_wavfile();
+void free_wavfile(struct WavFile *wav);
+
+struct WavFile *init_wav_file(struct signal_spec *sigspec);
+void write_wav_file(char *filename, struct WavFile *wav);
 
 struct WavFile *read_wav_file(char *filename);
 void sigspec_from_wav(struct WavFile *wav, struct signal_spec *sigspec);

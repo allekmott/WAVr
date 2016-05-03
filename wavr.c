@@ -13,7 +13,7 @@
 #include "wavr.h"
 #include "signal.h"
 
-#define WAVR_VERSION "0.2.0"
+#define WAVR_VERSION "0.2.1"
 
 int main(int argc, char *argv[]) {
 	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,
@@ -34,15 +34,15 @@ int main(int argc, char *argv[]) {
 	if (!args.sample_dump)
 		printf("WAVr v%s\n", WAVR_VERSION);
 
-	short *samples;
-
+	// TODO fix this cucky segfault
 	switch (args.input) {
 		case INPUT_NONE:
 			/* Generate samples */
+			wav = init_wav_file(&sigspec);
+
 			if (!args.sample_dump)
 				printf("\nGenerating samples...\n");
-			
-			samples = gen_sig(&sigspec, samplegen_sine);
+			wav->data = gen_sig(&sigspec, samplegen_sine);
 			
 			if (!args.sample_dump)
 				printf("Finished sample generation.\n");
@@ -51,40 +51,27 @@ int main(int argc, char *argv[]) {
 			/* Parse samples from stdin */
 			if (!args.sample_dump)
 				printf("Reading samples in from stdin...\n");
-			
-			samples = parse_sig(&sigspec, stdin);
+
+			wav = init_wav_file(&sigspec);
+			wav->data = parse_sig(&sigspec, stdin);
 			break;
 		case INPUT_FILE:
 			/* Pull samples from input file */
 			wav = read_wav_file(args.in_filename);
-			samples = wav->data;
 			sigspec_from_wav(wav, &sigspec);
 			break;
-		default: break; /* lol? */
+		default: exit(1); /* lol? */
 	}
 
 	if (!args.sample_dump) {
-		printf("\nWriting to %s...\n", args.out_filename);
-		FILE *out_file = init_wav_file(args.out_filename, &sigspec);
-
-		//printf("File opened\n");
-		size_t dataSize = bytesize_gen(&sigspec);
-		fwrite(samples, dataSize, 1, out_file);
-		fclose(out_file);
+		/* no dump, so writeout */
+		write_wav_file(args.out_filename, wav);
 	} else {
-		sample_dump(samples, &sigspec);	
+		sample_dump(wav->data, &sigspec);	
 	}
 
-	
 	/* cleanup */
-	if (args.input == INPUT_FILE) {
-		/* only allocates these in case of file input */
-		free(wav->wavHeader);
-		free(wav->formatHeader);
-		free(wav->dataHeader);
-		free(wav);
-	}
-	free(samples);
+	free_wavfile(wav);
 }
 
 void usage(const char *cmd) {
