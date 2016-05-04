@@ -13,7 +13,7 @@
 #include "wavr.h"
 #include "signal.h"
 
-#define WAVR_VERSION "0.2.1"
+#define WAVR_VERSION "0.2.2"
 
 int main(int argc, char *argv[]) {
 	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,
@@ -34,7 +34,6 @@ int main(int argc, char *argv[]) {
 	if (!args.sample_dump)
 		printf("WAVr v%s\n", WAVR_VERSION);
 
-	// TODO fix this cucky segfault
 	switch (args.input) {
 		case INPUT_NONE:
 			/* Generate samples */

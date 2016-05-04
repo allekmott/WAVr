@@ -13,13 +13,9 @@
 
 struct WavFile *empty_wavfile() {
 	struct WavFile *wav = malloc(sizeof(struct WavFile));
-	struct WavHeader *wavHeader = malloc(sizeof(struct WavHeader));
-	struct FormatHeader *formatHeader = malloc(sizeof(struct FormatHeader));
-	struct DataHeader *dataHeader = malloc(sizeof(struct DataHeader));
-
-	wav->wavHeader = wavHeader;
-	wav->formatHeader = formatHeader;
-	wav->dataHeader = dataHeader;
+	wav->wavHeader = malloc(sizeof(struct WavHeader));
+	wav->formatHeader = malloc(sizeof(struct FormatHeader));
+	wav->dataHeader = malloc(sizeof(struct DataHeader));
 
 	return wav;
 }
@@ -37,11 +33,11 @@ struct WavFile *init_wav_file(struct signal_spec *sigspec) {
 	struct WavFile *wav = empty_wavfile();
 
 	/* fill out header info stuff */
-	strcpy(wav->wavHeader->ChunkID, "RIFF");
+	strncpy(wav->wavHeader->ChunkID, "RIFF", 4);
 	wav->wavHeader->ChunkSize = (sizeof(struct WavHeader));
-	strcpy(wav->wavHeader->RIFFType, "WAVE");
+	strncpy(wav->wavHeader->RIFFType, "WAVE", 4);
 
-	strcpy(wav->formatHeader->ChunkID, "fmt ");
+	strncpy(wav->formatHeader->ChunkID, "fmt ", 4);
 	wav->formatHeader->ChunkSize = 16;
 	wav->formatHeader->CompressionCode = 1;
 	wav->formatHeader->Channels = 1;
@@ -49,9 +45,13 @@ struct WavFile *init_wav_file(struct signal_spec *sigspec) {
 	wav->formatHeader->SigBitsPerSamp = 16;
 	wav->formatHeader->BlockAlign = 2;
 	wav->formatHeader->AvgBytesPerSec = wav->formatHeader->BlockAlign * sigspec->sample_rate;
+	printf("Format header done\n");
 
-	strcpy(wav->dataHeader->ChunkID, "data");
+	strncpy(wav->dataHeader->ChunkID, "data", 4);
 	wav->dataHeader->ChunkSize = bytesize_gen(sigspec);
+	printf("Data header done\n");
+
+	return wav;
 }
 
 void write_wav_file(char *filename, struct WavFile *wav) {
