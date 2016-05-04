@@ -87,7 +87,8 @@ void help(const char *cmd) {
 		"-f <frequency>\t\tSet signal frequency to <frequency> Hz\n"
 		"-s <sampleRate>\t\tSet signal sample rate to <sampleRate> Hz\n"
 		"-l\t\t\tList available sample rates\n"
-		"-i\t\t\tInput samples from standard input\n"
+		"-i <in_file>\t\tInput wav from <in_file>\n"
+		"-c\t\t\tInput samples from standard input\n"
 		"-h\t\t\tWhat you just did\n");
 
 	exit(0);
