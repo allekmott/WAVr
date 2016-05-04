@@ -45,12 +45,9 @@ struct WavFile *init_wav_file(struct signal_spec *sigspec) {
 	wav->formatHeader->SigBitsPerSamp = 16;
 	wav->formatHeader->BlockAlign = 2;
 	wav->formatHeader->AvgBytesPerSec = wav->formatHeader->BlockAlign * sigspec->sample_rate;
-	printf("Format header done\n");
 
 	strncpy(wav->dataHeader->ChunkID, "data", 4);
 	wav->dataHeader->ChunkSize = bytesize_gen(sigspec);
-	printf("Data header done\n");
-
 	return wav;
 }
 
@@ -83,7 +80,7 @@ struct WavFile *read_wav_file(char *filename) {
 		exit(1);
 	}
 
-	printf("\nReading file '%s'\n", filename);
+	//printf("\nReading file '%s'\n", filename);
 
 	/* file open, allocate room for structs */
 	struct WavFile *wav = empty_wavfile();
@@ -94,9 +91,9 @@ struct WavFile *read_wav_file(char *filename) {
 	fread(wav->dataHeader, sizeof(struct DataHeader), 1, in); /* Data Header */
 
 	size_t sizeToRead = wav->dataHeader->ChunkSize;
-	printf("%d bytes to be read / %ikHz -> %.2fs\n", wav->dataHeader->ChunkSize,
+	/*printf("%d bytes to be read / %ikHz -> %.2fs\n", wav->dataHeader->ChunkSize,
 			wav->formatHeader->SampleRate / 1000,
-			(float) wav->dataHeader->ChunkSize / (float) wav->formatHeader->SampleRate);
+			(float) wav->dataHeader->ChunkSize / (float) wav->formatHeader->SampleRate);*/
 	
 	/* most problematic allocation, so we'll just make sure here... */
 	short *data = malloc(sizeToRead);
