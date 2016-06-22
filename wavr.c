@@ -5,6 +5,8 @@
  */
 
 #include <fcntl.h>
+#include <pthread.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -14,7 +16,7 @@
 #include "wavr.h"
 #include "signal.h"
 
-#define WAVR_VERSION "0.3.2"
+#define WAVR_VERSION "0.3.3"
 
 int main(int argc, char *argv[]) {
 	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,
@@ -79,6 +81,7 @@ int main(int argc, char *argv[]) {
 
 	/* cleanup */
 	free_wavfile(wav);
+	pthread_exit(NULL);
 }
 
 void usage(const char *cmd) {

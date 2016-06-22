@@ -35,6 +35,13 @@ short *alloc_buffer(struct signal_spec *sigspec) {
 }
 
 short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *), int thread_count) {
+	/* Helpful printout */
+	printf("Signal info:\n"
+		"------------\n"
+		"Frequency:\t%.2f Hz\n"
+		"Duration:\t%.2fs\n"
+		"Sample rate:\t%i Hz\n\n", sigspec->frequency, sigspec->duration, sigspec->sample_rate);
+
 	/* Check for valid frequency/sampleRate ratio */
 	if (sigspec->sample_rate < sigspec->frequency * 2)
 		printf("WARNING: With frequency of %f Hz, sample rate should be at least %i Hz\n",
@@ -43,6 +50,8 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 
 	short *buffer = alloc_buffer(sigspec);
 	size_t bufferSize = bytesize_gen(sigspec);
+
+	int numberOfSamples = bufferSize / sizeof(short);
 	int sampleNo;
 
 	/* time delta per sample (in seconds) */
@@ -58,22 +67,31 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	int threadnum;
-	int samples_per_thread = bufferSize/thread_count;
+	int samples_per_thread = numberOfSamples/thread_count;
+
+	struct sampleworker_data data[thread_count];
 	// TODO finishhh
 	for (threadnum = 0; threadnum < thread_count; threadnum++) {
-		struct sampleworker_data data;
-		data.buffer = &buffer[samples_per_thread * threadnum];
-		data.sigspec = sigspec;
-		data.t_step = tStep;
+		printf("Creating worker %i\n", threadnum + 1);
+
+		struct sampleworker_data *data = &data[threadnum];
+
+		data->buffer = &(buffer[samples_per_thread * threadnum]);
+		/* ^ problematic line */
+
+		data->sigspec = sigspec;
+		data->t_step = tStep;
 
 		/* last dude gets remainder */
-		data.number_to_generate = ((threadnum + 1) == thread_count) ?
-			samples_per_thread + (bufferSize % thread_count) : samples_per_thread;
+		data->number_to_generate = ((threadnum + 1) == thread_count) ?
+			samples_per_thread + (numberOfSamples % thread_count)
+			: samples_per_thread;
 
 		/* pass generator function to data struct */
-		data.generator = samplegen;
+		data->generator = samplegen;
 
-		pthread_create(&workers[threadnum], &attr, sample_worker, (void *) &data);
+		printf("pthread_create (%i)\n", threadnum + 1);
+		pthread_create(&workers[threadnum], &attr, sample_worker, (void *) data);
 	}
 	/* free attr */
 	pthread_attr_destroy(&attr);
@@ -89,6 +107,8 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 
 void *sample_worker(void *sampleworker_data) {
 	struct sampleworker_data *data = (struct sampleworker_data *) sampleworker_data;
+	printf("sample_worker buffer start: 0x%x\n", (int) &(data->buffer));
+	printf("To generate: %i samples\n", data->number_to_generate);
 
 	/* create sample struct */
 	struct sample sample;
