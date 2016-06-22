@@ -36,7 +36,7 @@ short *alloc_buffer(struct signal_spec *sigspec) {
 
 short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *), int thread_count) {
 	/* Helpful printout */
-	printf("Signal info:\n"
+	printf("\nSignal info:\n"
 		"------------\n"
 		"Frequency:\t%.2f Hz\n"
 		"Duration:\t%.2fs\n"
@@ -70,29 +70,34 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	int samples_per_thread = numberOfSamples/thread_count;
 
 	struct sampleworker_data data[thread_count];
+
 	// TODO finishhh
 	for (threadnum = 0; threadnum < thread_count; threadnum++) {
-		printf("Creating worker %i\n", threadnum + 1);
+		struct sampleworker_data *datum = &data[threadnum];
 
-		struct sampleworker_data *data = &data[threadnum];
+		/* index offset for thread */
+		int ioffset = samples_per_thread * threadnum;
 
-		data->buffer = &(buffer[samples_per_thread * threadnum]);
+		datum->buffer = buffer;
 		/* ^ problematic line */
 
-		data->sigspec = sigspec;
-		data->t_step = tStep;
+		datum->sigspec = sigspec;
+		datum->start_i = ioffset;
+		datum->t_step = tStep;
 
 		/* last dude gets remainder */
-		data->number_to_generate = ((threadnum + 1) == thread_count) ?
+		datum->number_to_generate = ((threadnum + 1) == thread_count) ?
 			samples_per_thread + (numberOfSamples % thread_count)
 			: samples_per_thread;
 
 		/* pass generator function to data struct */
-		data->generator = samplegen;
+		datum->generator = samplegen;
 
-		printf("pthread_create (%i)\n", threadnum + 1);
-		pthread_create(&workers[threadnum], &attr, sample_worker, (void *) data);
+		printf("Start worker (%i)\n", threadnum + 1);
+		pthread_create(&workers[threadnum], &attr, sample_worker, (void *) datum);
 	}
+	printf("\n");
+
 	/* free attr */
 	pthread_attr_destroy(&attr);
 
@@ -100,15 +105,15 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	for (threadnum = 0; threadnum < thread_count; threadnum++) {
 		void *status;
 		pthread_join(workers[threadnum], &status);
+		printf("Worker exit (%i)\n", threadnum + 1);
 	}
+	printf("\n");
 
 	return buffer;
 }
 
 void *sample_worker(void *sampleworker_data) {
 	struct sampleworker_data *data = (struct sampleworker_data *) sampleworker_data;
-	printf("sample_worker buffer start: 0x%x\n", (int) &(data->buffer));
-	printf("To generate: %i samples\n", data->number_to_generate);
 
 	/* create sample struct */
 	struct sample sample;
@@ -118,12 +123,12 @@ void *sample_worker(void *sampleworker_data) {
 	int sampleNo;
 	for (sampleNo = 0; sampleNo < data->number_to_generate; sampleNo++) {
 		/* time, relative to current sample */
-		float t = data->t_step * sampleNo;
+		float t = data->t_step * (data->start_i + sampleNo);
 		
 		sample.t = t;
 
 		/* sample data points to location in buffer */
-		sample.data = &(data->buffer[sampleNo]);
+		sample.data = &(data->buffer[data->start_i + sampleNo]);
 		data->generator(&sample);
 	}
 	return NULL;

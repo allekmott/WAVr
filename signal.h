@@ -21,18 +21,15 @@ struct sample {
 };
 
 /* Data structure to house thread-relevant
- * information for signal workers. Contains
- * pointer to designated segment of buffer
- * and signal specificaiton,  as
- * well as number of samples to be generated
- * and time delta between samples
+ * information for signal workers.
  */
 struct sampleworker_data {
-	short *buffer;
-	struct signal_spec *sigspec;
-	int t_step;
-	int number_to_generate;
-	void (*generator) (struct sample *);
+	short *buffer; /* sample buffer */
+	struct signal_spec *sigspec; /* struct containing signal information */
+	int start_i; /* index to start at within buffer */
+	float t_step; /* time delta b/w samples */
+	int number_to_generate; /* number of samples to generate */
+	void (*generator) (struct sample *); /* generator function */
 };
 
 /* Generate signal with
