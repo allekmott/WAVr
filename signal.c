@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <pthread.h>
 
 #include "wav.h"
 #include "signal.h"
@@ -33,7 +34,7 @@ short *alloc_buffer(struct signal_spec *sigspec) {
 	return buffer;
 }
 
-short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *)) {
+short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *), int thread_count) {
 	/* Check for valid frequency/sampleRate ratio */
 	if (sigspec->sample_rate < sigspec->frequency * 2)
 		printf("WARNING: With frequency of %f Hz, sample rate should be at least %i Hz\n",
@@ -44,24 +45,68 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *))
 	size_t bufferSize = bytesize_gen(sigspec);
 	int sampleNo;
 
-	/* time delta per sample */
+	/* time delta per sample (in seconds) */
 	float tStep = 1.0f / (float) sigspec->sample_rate;
 
-	/* create sample struct */
-	struct sample sample;
-	sample.sigspec = sigspec;
+	/* aaaannnnndd heres where we start threading it up... */
+	// TODO thread dat shiz
+	pthread_t workers[thread_count];
 
-	/* gen dat sine */
-	for (sampleNo = 0; sampleNo < bufferSize; sampleNo++) {
-		/* time, relative to current sample */
-		float t = tStep * sampleNo;
-		
-		sample.t = t;
-		sample.data = &(buffer[sampleNo]);
-		samplegen(&sample);
+	/* attributes (to make joinable) */
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	int threadnum;
+	int samples_per_thread = bufferSize/thread_count;
+	// TODO finishhh
+	for (threadnum = 0; threadnum < thread_count; threadnum++) {
+		struct sampleworker_data data;
+		data.buffer = &buffer[samples_per_thread * threadnum];
+		data.sigspec = sigspec;
+		data.t_step = tStep;
+
+		/* last dude gets remainder */
+		data.number_to_generate = ((threadnum + 1) == thread_count) ?
+			samples_per_thread + (bufferSize % thread_count) : samples_per_thread;
+
+		/* pass generator function to data struct */
+		data.generator = samplegen;
+
+		pthread_create(&workers[threadnum], &attr, sample_worker, (void *) &data);
+	}
+	/* free attr */
+	pthread_attr_destroy(&attr);
+
+	/* rejoin upon termination */
+	for (threadnum = 0; threadnum < thread_count; threadnum++) {
+		void *status;
+		pthread_join(workers[threadnum], &status);
 	}
 
 	return buffer;
+}
+
+void *sample_worker(void *sampleworker_data) {
+	struct sampleworker_data *data = (struct sampleworker_data *) sampleworker_data;
+
+	/* create sample struct */
+	struct sample sample;
+	sample.sigspec = data->sigspec;
+
+	/* gen dat sine */
+	int sampleNo;
+	for (sampleNo = 0; sampleNo < data->number_to_generate; sampleNo++) {
+		/* time, relative to current sample */
+		float t = data->t_step * sampleNo;
+		
+		sample.t = t;
+
+		/* sample data points to location in buffer */
+		sample.data = &(data->buffer[sampleNo]);
+		data->generator(&sample);
+	}
+	return NULL;
 }
 
 void samplegen_sine(struct sample *sample) {

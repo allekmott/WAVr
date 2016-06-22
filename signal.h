@@ -20,12 +20,32 @@ struct sample {
 	short *data;
 };
 
+/* Data structure to house thread-relevant
+ * information for signal workers. Contains
+ * pointer to designated segment of buffer
+ * and signal specificaiton,  as
+ * well as number of samples to be generated
+ * and time delta between samples
+ */
+struct sampleworker_data {
+	short *buffer;
+	struct signal_spec *sigspec;
+	int t_step;
+	int number_to_generate;
+	void (*generator) (struct sample *);
+};
+
 /* Generate signal with
  * frequency (Hz)
  * duration (s)
  * sampleRate (Hz)
  */
-short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *));
+short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *), int thread_count);
+
+/* Worker thread for sample generation
+ * generates samples within thread bounds
+ */
+void *sample_worker(void *genspec);
 
 /* Generate samples with sinusoidal function
  */

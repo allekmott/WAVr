@@ -14,7 +14,7 @@
 #include "wavr.h"
 #include "signal.h"
 
-#define WAVR_VERSION "0.3.1"
+#define WAVR_VERSION "0.3.2"
 
 int main(int argc, char *argv[]) {
 	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 			wav = init_wav_file(&sigspec);
 
 			printf("\nGenerating samples (%i thread(s))...\n", args.thread_count);
-			wav->data = gen_sig(&sigspec, samplegen_sine);
+			wav->data = gen_sig(&sigspec, samplegen_sine, args.thread_count);
 			
 			printf("Finished sample generation.\n");
 			break;
