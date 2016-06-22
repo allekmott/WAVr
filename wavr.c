@@ -13,7 +13,7 @@
 #include "wavr.h"
 #include "signal.h"
 
-#define WAVR_VERSION "0.2.2"
+#define WAVR_VERSION "0.3.0"
 
 int main(int argc, char *argv[]) {
 	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,
@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
 	/* args.in_filename only initialized if necessary */
 	args.out_filename = DEFAULT_OUTFILE;
 	args.sample_dump = 0;
+	args.thread_count = 1;
 	args.input = INPUT_NONE; /* generate samples by default */
 	args.sigspec = &sigspec;
 
@@ -75,10 +76,11 @@ int main(int argc, char *argv[]) {
 
 void usage(const char *cmd) {
 	printf("Usage: %s <args>\n", cmd);
+	exit(0);
 }
 
 void help(const char *cmd) {
-	usage(cmd);
+	printf("Usage: %s <args>\n", cmd);
 
 	printf("Flags: \n"
 		"-o <out_file>\t\tOutput wav to <out_file>\n"
@@ -89,6 +91,7 @@ void help(const char *cmd) {
 		"-l\t\t\tList available sample rates\n"
 		"-i <in_file>\t\tInput wav from <in_file>\n"
 		"-c\t\t\tInput samples from standard input\n"
+		"-j <number>\t\tChange generation thread count\n"
 		"-h\t\t\tWhat you just did\n");
 
 	exit(0);
@@ -98,7 +101,7 @@ void handle_args(struct wavr_args *args, int argc, char *argv[]) {
 	int c;
 	extern int optind, optopt;
 
-	while ((c = getopt(argc, argv, "o:dt:f:ls:i:ch")) != -1) {
+	while ((c = getopt(argc, argv, "o:dt:f:ls:i:cj:h")) != -1) {
 		switch (c) {
 			/* set output filename */
 			case 'o': args->out_filename = optarg; break;
@@ -149,9 +152,19 @@ void handle_args(struct wavr_args *args, int argc, char *argv[]) {
 				exit(0);
 				break;
 
+			/* specify input file */
 			case 'i':
 				args->input = INPUT_FILE;
 				args->in_filename = optarg;
+				break;
+
+			/* specify thread count */
+			case 'j':
+				args->thread_count = atoi(optarg);
+				if (args->thread_count < 1) {
+					printf("Invalid thread count: %i\n", args->thread_count);
+					exit(1);
+				}
 				break;
 
 			/* input sample values from stdin */

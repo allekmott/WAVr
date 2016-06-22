@@ -24,6 +24,7 @@ struct wavr_args {
 	char *in_filename;
 	char *out_filename;
 	int sample_dump;
+	int thread_count;
 	enum input_method input;
 	struct signal_spec *sigspec;
 };
