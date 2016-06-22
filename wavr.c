@@ -4,6 +4,7 @@
  * Created: 20 Dec 2015
  */
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,7 +14,7 @@
 #include "wavr.h"
 #include "signal.h"
 
-#define WAVR_VERSION "0.3.0"
+#define WAVR_VERSION "0.3.1"
 
 int main(int argc, char *argv[]) {
 	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,
@@ -32,25 +33,27 @@ int main(int argc, char *argv[]) {
 
 	handle_args(&args, argc, argv);
 
-	if (!args.sample_dump)
-		printf("WAVr v%s\n", WAVR_VERSION);
+	int oldstdout = dup(1);
+	if (args.sample_dump) {
+		/* exclusively output samples -> suppress all other output */
+		freopen("/dev/null", "w", stdout);
+	}
+
+	printf("WAVr v%s\n", WAVR_VERSION);
 
 	switch (args.input) {
 		case INPUT_NONE:
-			/* Generate samples */
+			/* No input -> generate samples */
 			wav = init_wav_file(&sigspec);
 
-			if (!args.sample_dump)
-				printf("\nGenerating samples...\n");
+			printf("\nGenerating samples (%i thread(s))...\n", args.thread_count);
 			wav->data = gen_sig(&sigspec, samplegen_sine);
 			
-			if (!args.sample_dump)
-				printf("Finished sample generation.\n");
+			printf("Finished sample generation.\n");
 			break;
 		case INPUT_STDIN:
 			/* Parse samples from stdin */
-			if (!args.sample_dump)
-				printf("Reading samples in from stdin...\n");
+			printf("Reading samples in from stdin...\n");
 
 			wav = init_wav_file(&sigspec);
 			wav->data = parse_sig(&sigspec, stdin);
@@ -67,6 +70,10 @@ int main(int argc, char *argv[]) {
 		/* no dump, so writeout */
 		write_wav_file(args.out_filename, wav);
 	} else {
+		/* restore stdout */
+		fclose(stdout);
+		stdout = fdopen(oldstdout, "w");
+
 		sample_dump(wav->data, &sigspec);	
 	}
 
