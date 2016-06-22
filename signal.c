@@ -58,7 +58,6 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	float tStep = 1.0f / (float) sigspec->sample_rate;
 
 	/* aaaannnnndd heres where we start threading it up... */
-	// TODO thread dat shiz
 	pthread_t workers[thread_count];
 
 	/* attributes (to make joinable) */
@@ -71,7 +70,6 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 
 	struct sampleworker_data data[thread_count];
 
-	// TODO finishhh
 	for (threadnum = 0; threadnum < thread_count; threadnum++) {
 		struct sampleworker_data *datum = &data[threadnum];
 
@@ -79,8 +77,6 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 		int ioffset = samples_per_thread * threadnum;
 
 		datum->buffer = buffer;
-		/* ^ problematic line */
-
 		datum->sigspec = sigspec;
 		datum->start_i = ioffset;
 		datum->t_step = tStep;
