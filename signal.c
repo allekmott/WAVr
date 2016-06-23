@@ -12,14 +12,20 @@
 #include "signal.h"
 
 size_t bytesize_gen(struct signal_spec *sigspec) {
+	/* buffer length (samples) = duration (seconds) * sample rate (samples/sec) */
 	size_t bufferLength = sigspec->duration * sigspec->sample_rate;
+
+	/* sample size set at short (for now) */
 	size_t sampleSize = sizeof(short);
 
+	/* size of buffer (bytes) = buffer length (samples) * sample size (bytes/sample) */
 	return (bufferLength * sampleSize);
 }
 
 short *alloc_buffer(struct signal_spec *sigspec) {
 	short *buffer;
+
+	/* (see bytesize_gen for calculation of buffer size) */
 	size_t bufferSize = bytesize_gen(sigspec);
 
 	buffer = malloc(bufferSize);
@@ -29,7 +35,6 @@ short *alloc_buffer(struct signal_spec *sigspec) {
 			"\tDesired buffer size: %zub\n", bufferSize);
 		exit(1);
 	}
-
 
 	return buffer;
 }
@@ -66,25 +71,21 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	int threadnum;
-	int samples_per_thread = numberOfSamples/thread_count;
-
 	struct sampleworker_data data[thread_count];
 
+	/* create data structures, launch threads */
 	for (threadnum = 0; threadnum < thread_count; threadnum++) {
 		struct sampleworker_data *datum = &data[threadnum];
 
 		/* index offset for thread */
-		int ioffset = samples_per_thread * threadnum;
+		int ioffset = threadnum;
 
 		datum->buffer = buffer;
 		datum->sigspec = sigspec;
-		datum->start_i = ioffset;
+		datum->start_i = threadnum;
+		datum->i_step = threadnum + 1;
 		datum->t_step = tStep;
-
-		/* last dude gets remainder */
-		datum->number_to_generate = ((threadnum + 1) == thread_count) ?
-			samples_per_thread + (numberOfSamples % thread_count)
-			: samples_per_thread;
+		datum->total_samples = numberOfSamples;
 
 		/* pass generator function to data struct */
 		datum->generator = samplegen;
@@ -117,7 +118,7 @@ void *sample_worker(void *sampleworker_data) {
 
 	/* gen dat sine */
 	int sampleNo;
-	for (sampleNo = 0; sampleNo < data->number_to_generate; sampleNo++) {
+	for (sampleNo = 0; sampleNo < data->total_samples; sampleNo += data->i_step) {
 		/* time, relative to current sample */
 		float t = data->t_step * (data->start_i + sampleNo);
 		

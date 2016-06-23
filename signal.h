@@ -27,8 +27,9 @@ struct sampleworker_data {
 	short *buffer; /* sample buffer */
 	struct signal_spec *sigspec; /* struct containing signal information */
 	int start_i; /* index to start at within buffer */
+	int i_step; /* number of indicies to jump b/w samples */
 	float t_step; /* time delta b/w samples */
-	int number_to_generate; /* number of samples to generate */
+	int total_samples; /* number of samples to generate */
 	void (*generator) (struct sample *); /* generator function */
 };
 
