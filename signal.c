@@ -83,7 +83,7 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 		datum->buffer = buffer;
 		datum->sigspec = sigspec;
 		datum->start_i = threadnum;
-		datum->i_step = threadnum + 1;
+		datum->i_step = thread_count;
 		datum->t_step = tStep;
 		datum->total_samples = numberOfSamples;
 
@@ -118,7 +118,7 @@ void *sample_worker(void *sampleworker_data) {
 
 	/* gen dat sine */
 	int sampleNo;
-	for (sampleNo = 0; sampleNo < data->total_samples; sampleNo += data->i_step) {
+	for (sampleNo = data->start_i; sampleNo < data->total_samples; sampleNo += data->i_step) {
 		/* time, relative to current sample */
 		float t = data->t_step * (data->start_i + sampleNo);
 		
