@@ -65,11 +65,6 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	/* aaaannnnndd heres where we start threading it up... */
 	pthread_t workers[thread_count];
 
-	/* attributes (to make joinable) */
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
 	int threadnum;
 	struct sampleworker_data data[thread_count];
 
@@ -91,13 +86,10 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 		datum->generator = samplegen;
 
 		printf("Start worker (%i)\n", threadnum + 1);
-		pthread_create(&workers[threadnum], &attr, sample_worker, (void *) datum);
+		pthread_create(&workers[threadnum], NULL, sample_worker, (void *) datum);
 	}
 	printf("\n");
-
-	/* free attr */
-	pthread_attr_destroy(&attr);
-
+	
 	/* rejoin upon termination */
 	for (threadnum = 0; threadnum < thread_count; threadnum++) {
 		void *status;
