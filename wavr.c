@@ -16,7 +16,7 @@
 #include "wavr.h"
 #include "signal.h"
 
-#define WAVR_VERSION "0.4.5"
+#define WAVR_VERSION "0.5.0"
 
 int main(int argc, char *argv[]) {
 	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,
@@ -30,6 +30,7 @@ int main(int argc, char *argv[]) {
 	args.thread_count = 1;
 	args.input = INPUT_NONE; /* generate samples by default */
 	args.sigspec = &sigspec;
+	args.generator = samplegen_sine; /* generate sine by default */
 
 	struct WavFile *wav;
 
@@ -49,7 +50,7 @@ int main(int argc, char *argv[]) {
 			wav = init_wav_file(&sigspec);
 
 			printf("\nGenerating samples (%i thread(s))...\n", args.thread_count);
-			wav->data = gen_sig(&sigspec, samplegen_sine, args.thread_count);
+			wav->data = gen_sig(&sigspec, args.generator, args.thread_count);
 			
 			printf("Finished sample generation.\n");
 			break;
@@ -102,6 +103,7 @@ void help(const char *cmd) {
 		"-i <in_file>\t\tInput wav from <in_file>\n"
 		"-c\t\t\tInput samples from standard input\n"
 		"-j <number>\t\tChange generation thread count\n"
+		"-w <waveform>\t\tSet waveform (triangle, square, sine)\n"
 		"-h\t\t\tWhat you just did\n");
 
 	exit(0);
@@ -111,7 +113,7 @@ void handle_args(struct wavr_args *args, int argc, char *argv[]) {
 	int c;
 	extern int optind, optopt;
 
-	while ((c = getopt(argc, argv, "o:dt:f:ls:i:cj:h")) != -1) {
+	while ((c = getopt(argc, argv, "o:dt:f:ls:i:cj:w:h")) != -1) {
 		switch (c) {
 			/* set output filename */
 			case 'o': args->out_filename = optarg; break;
@@ -181,6 +183,20 @@ void handle_args(struct wavr_args *args, int argc, char *argv[]) {
 			case 'c':
 				/*printf("Parsing samples from standard input\n");*/
 				args->input = INPUT_STDIN;
+				break;
+
+			/* set waveform for generation */
+			case 'w':
+				if (!strcmp(optarg, "sine"))
+					args->generator = (void *) samplegen_sine;
+				else if (!strcmp(optarg, "triangle"))
+					args->generator = (void *) samplegen_triangle;
+				else if (!strcmp(optarg, "square"))
+					args->generator = (void *) samplegen_square;
+				else {
+					printf("Invalid waveform: %s\n", optarg);
+					exit(1);
+				}
 				break;
 
 			case 'h': help(argv[0]); break;

@@ -27,6 +27,8 @@ struct wavr_args {
 	int thread_count;
 	enum input_method input;
 	struct signal_spec *sigspec;
+	/* TODO make type more explicit here */
+	void *generator; /* generator function (actually void (*generator) (struct sample *) */
 };
 
 void usage(const char *cmd);
