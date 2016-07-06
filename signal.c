@@ -73,20 +73,31 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	int threadnum;
 	struct sampleworker_data data[thread_count];
 
+	/* size of block (in samples) that each thread will generate */
+	int blockSize = numberOfSamples / thread_count;
+
+	/* Decide if we need the first thread to do a tad more */
+	int oddOffset = (numberOfSamples % 2 != 0);
 
 	/* create data structures, launch threads */
 	for (threadnum = 0; threadnum < thread_count; threadnum++) {
 		struct sampleworker_data *datum = &data[threadnum];
 
 		/* index offset for thread */
-		int ioffset = threadnum;
+		int ioffset = (oddOffset && threadnum) ? (blockSize * threadnum) + 1
+			: (blockSize * threadnum);
 
 		datum->buffer = buffer;
 		datum->sigspec = sigspec;
-		datum->start_i = threadnum;
-		datum->i_step = thread_count;
+		datum->start_i = ioffset;
+
+		/* more handling for odd case */
+		if (oddOffset && threadnum)
+			datum->to_generate = blockSize + 1;
+		else
+			datum->to_generate = blockSize;
+		
 		datum->t_step = tStep;
-		datum->total_samples = numberOfSamples;
 
 		/* pass generator function to data struct */
 		datum->generator = samplegen;
@@ -124,14 +135,14 @@ void *sample_worker(void *sampleworker_data) {
 
 	/* gen dat sine */
 	int sampleNo;
-	for (sampleNo = data->start_i; sampleNo < data->total_samples; sampleNo += data->i_step) {
+	for (sampleNo = 0; sampleNo < data->to_generate; sampleNo++) {
 		/* time, relative to current sample */
 		float t = data->t_step * (data->start_i + sampleNo);
 		
 		sample.t = t;
 
 		/* sample data points to location in buffer */
-		sample.data = &(data->buffer[sampleNo]);
+		sample.data = &(data->buffer[data->start_i + sampleNo]);
 
 		/* generator points to function which will generate a sample and store
 		   it in sample.data */
