@@ -3,6 +3,7 @@
  * Created: 20 Dec 2015
  */
 
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -62,6 +63,9 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	/* time delta per sample (in seconds) */
 	float tStep = 1.0f / (float) sigspec->sample_rate;
 
+	/* arrays of clock_t's corresponding to each thread */
+	clock_t start_times[thread_count];
+
 	/* aaaannnnndd heres where we start threading it up... */
 	pthread_t workers[thread_count];
 
@@ -86,6 +90,9 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 		datum->generator = samplegen;
 
 		printf("Start worker (%i)\n", threadnum + 1);
+
+		/* register start time of thread */
+		start_times[threadnum] = clock();
 		pthread_create(&workers[threadnum], NULL, sample_worker, (void *) datum);
 	}
 	printf("\n");
@@ -94,7 +101,12 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	for (threadnum = 0; threadnum < thread_count; threadnum++) {
 		void *status;
 		pthread_join(workers[threadnum], &status);
-		printf("Worker exit (%i)\n", threadnum + 1);
+		
+		/* calculate time difference */
+		clock_t diff = clock() - start_times[threadnum];
+		float elapsed = (float) diff / (float) CLOCKS_PER_SEC;
+
+		printf("Worker exit (%i), %.2fs elapsed\n", threadnum + 1, elapsed);
 	}
 	printf("\n");
 

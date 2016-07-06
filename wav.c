@@ -4,6 +4,7 @@
  * Created: 15 Jan 2016
  */
 
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,6 +53,10 @@ struct WavFile *init_wav_file(struct signal_spec *sigspec) {
 }
 
 void write_wav_file(char *filename, struct WavFile *wav) {
+	/* set up clock_t's and grab start time */
+	clock_t start, diff;
+	start = clock();
+
 	/* openy openy */
 	FILE *out = fopen(filename, "wb");
 	if (out == NULL) {
@@ -68,7 +73,11 @@ void write_wav_file(char *filename, struct WavFile *wav) {
 	/* data header's ChunkSize is literally the size of the sample array */
 	fwrite(wav->data, wav->dataHeader->ChunkSize, 1, out);
 
-	printf("Write complete\n");
+	/* calculated elasped time */
+	diff = clock() - start;
+	float elapsed = (float) diff / (float) CLOCKS_PER_SEC;
+
+	printf("Write complete (%.2fs)\n", elapsed);
 	fclose(out);
 }
 
