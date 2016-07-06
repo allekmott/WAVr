@@ -16,7 +16,7 @@
 #include "wavr.h"
 #include "signal.h"
 
-#define WAVR_VERSION "0.4.4"
+#define WAVR_VERSION "0.4.5"
 
 int main(int argc, char *argv[]) {
 	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,

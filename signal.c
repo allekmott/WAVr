@@ -3,6 +3,7 @@
  * Created: 20 Dec 2015
  */
 
+#include <limits.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,13 +131,44 @@ void *sample_worker(void *sampleworker_data) {
 
 		/* sample data points to location in buffer */
 		sample.data = &(data->buffer[data->start_i + sampleNo]);
+
+		/* generator points to function which will generate a sample and store
+		   it in sample.data */
 		data->generator(&sample);
 	}
 	return NULL;
 }
 
 void samplegen_sine(struct sample *sample) {
-	*(sample->data) = (short) (10000.0f * sin(sample->sigspec->frequency * (2.0f * M_PI) * sample->t));
+	*(sample->data) = (short) ((float) SHRT_MAX * sin(sample->sigspec->frequency * (2.0f * M_PI) * sample->t));
+}
+
+void samplegen_triangle(struct sample *sample) {
+	/* Derivative of sine function (cos) */
+	float cosine = cos(sample->sigspec->frequency * (2.0f * M_PI) * sample->t);
+	short value;
+
+	float period = 1.0f / sample->sigspec->frequency;
+	int totalCycles = (int) (sample->t / period);
+	float timeInCycle = sample->t - ((float) totalCycles * period);
+
+	/* slope = rise/run = 2 * min->max / period */
+	float slope = 2.0f * (float) USHRT_MAX / (1.0f/sample->sigspec->frequency);
+	if (cosine > 0)
+		value = (short) (slope * timeInCycle);
+	else if (cosine < 0)
+		value = (short) (-1.0f * slope * timeInCycle);
+	else
+		value = (short) 0;
+
+	*(sample->data) = value;
+}
+
+void samplegen_square(struct sample *sample) {
+	/* Calculate sine, if positive, output short max,
+	   if negative, output short min */
+	float sine = (float) SHRT_MAX * sin(sample->sigspec->frequency * (2.0f * M_PI) * sample->t);
+	*(sample->data) = (sine > 0) ? SHRT_MAX : SHRT_MIN;
 }
 
 short *parse_sig(struct signal_spec *sigspec, FILE *in) {

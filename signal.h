@@ -49,6 +49,14 @@ void *sample_worker(void *genspec);
  */
 void samplegen_sine(struct sample *sample);
 
+/* Generate samples with triangular function
+ */
+void samplegen_triangle(struct sample *sample);
+
+/* Generate samples with square function
+ */
+void samplegen_square(struct sample *sample);
+
 /* Parse signal from provided input file
  * (stdin by default)
  */
