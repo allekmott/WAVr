@@ -73,6 +73,7 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	int threadnum;
 	struct sampleworker_data data[thread_count];
 
+
 	/* create data structures, launch threads */
 	for (threadnum = 0; threadnum < thread_count; threadnum++) {
 		struct sampleworker_data *datum = &data[threadnum];
@@ -130,7 +131,7 @@ void *sample_worker(void *sampleworker_data) {
 		sample.t = t;
 
 		/* sample data points to location in buffer */
-		sample.data = &(data->buffer[data->start_i + sampleNo]);
+		sample.data = &(data->buffer[sampleNo]);
 
 		/* generator points to function which will generate a sample and store
 		   it in sample.data */
@@ -145,18 +146,19 @@ void samplegen_sine(struct sample *sample) {
 
 void samplegen_triangle(struct sample *sample) {
 	/* Derivative of sine function (cos) */
-	float cosine = cos(sample->sigspec->frequency * (2.0f * M_PI) * sample->t);
+	float deriv = cos(sample->sigspec->frequency * (2.0f * M_PI) * sample->t);
 	short value;
 
+	/* calculate time into current cycle */
 	float period = 1.0f / sample->sigspec->frequency;
 	int totalCycles = (int) (sample->t / period);
-	float timeInCycle = sample->t - ((float) totalCycles * period);
+	double timeInCycle = sample->t - ((float) totalCycles * period);
 
 	/* slope = rise/run = 2 * min->max / period */
 	float slope = 2.0f * (float) USHRT_MAX / (1.0f/sample->sigspec->frequency);
-	if (cosine > 0)
+	if (deriv > 0.0f)
 		value = (short) (slope * timeInCycle);
-	else if (cosine < 0)
+	else if (deriv < 0.0f)
 		value = (short) (-1.0f * slope * timeInCycle);
 	else
 		value = (short) 0;
