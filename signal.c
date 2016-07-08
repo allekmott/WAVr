@@ -62,7 +62,7 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	int sampleNo;
 
 	/* time delta per sample (in seconds) */
-	float tStep = 1.0f / (float) sigspec->sample_rate;
+	float tStep = 1.0 / (float) sigspec->sample_rate;
 
 	/* arrays of clock_t's corresponding to each thread */
 	clock_t start_times[thread_count];
@@ -155,24 +155,25 @@ void samplegen_sine(struct sample *sample) {
 	*(sample->data) = (short) ((float) SHRT_MAX * sin(sample->sigspec->frequency * (2.0f * M_PI) * sample->t));
 }
 
+/* TODO issues seem to be caused by lack of precision in totalCycles */
 void samplegen_triangle(struct sample *sample) {
-	/* Derivative of sine function (cos) */
-	float deriv = cos(sample->sigspec->frequency * (2.0f * M_PI) * sample->t);
 	short value;
 
 	/* calculate time into current cycle */
 	float period = 1.0f / sample->sigspec->frequency;
 	int totalCycles = (int) (sample->t / period);
-	double timeInCycle = sample->t - ((float) totalCycles * period);
+	float timeInCycle = sample->t - ((float) totalCycles * period);
 
 	/* slope = rise/run = 2 * min->max / period */
 	float slope = 2.0f * (float) USHRT_MAX / (1.0f/sample->sigspec->frequency);
-	if (deriv > 0.0f)
+
+	/* For first quarter of cycle, increase */
+	if (timeInCycle < period / 4.0f || timeInCycle > (3.0f * period / 4.0f)) {
 		value = (short) (slope * timeInCycle);
-	else if (deriv < 0.0f)
+	/* From 1/4 to 3/4 of cycle, decrease */
+	} else {
 		value = (short) (-1.0f * slope * timeInCycle);
-	else
-		value = (short) 0;
+	}
 
 	*(sample->data) = value;
 }
