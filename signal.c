@@ -155,7 +155,7 @@ void samplegen_sine(struct sample *sample) {
 	*(sample->data) = (short) ((float) SHRT_MAX * sin(sample->sigspec->frequency * (2.0f * M_PI) * sample->t));
 }
 
-/* TODO issues seem to be caused by lack of precision in totalCycles */
+/* TODO optimize this guy */
 void samplegen_triangle(struct sample *sample) {
 	short value;
 
@@ -164,15 +164,29 @@ void samplegen_triangle(struct sample *sample) {
 	int totalCycles = (int) (sample->t / period);
 	float timeInCycle = sample->t - ((float) totalCycles * period);
 
-	/* slope = rise/run = 2 * min->max / period */
-	float slope = 2.0f * (float) USHRT_MAX / (1.0f/sample->sigspec->frequency);
+	/* time in cycle, normalized by period */
+	float normTimeInCycle = timeInCycle/period;
 
-	/* For first quarter of cycle, increase */
-	if (timeInCycle < period / 4.0f || timeInCycle > (3.0f * period / 4.0f)) {
+	/* slope = rise/run = 2 * min->max / period */
+	float slope = 2.0f * (float) USHRT_MAX / period;
+
+	value = 0;
+
+	/* First quarter: 0 -> max */
+	if (normTimeInCycle >= .0f && normTimeInCycle < .25f) {
 		value = (short) (slope * timeInCycle);
-	/* From 1/4 to 3/4 of cycle, decrease */
+	/* Second quarter: max -> 0 */
+	} else if (normTimeInCycle >= .25f && normTimeInCycle < .5f) {
+		float qTime = (timeInCycle - (period / 4.0f));
+		value = (short) (-1.0f * slope * qTime) + SHRT_MAX;
+	/* Third quarter: 0 -> min */
+	} else if (normTimeInCycle >= .5f && normTimeInCycle < .75f) {
+		float qTime = (timeInCycle - (period / 2.0f));
+		value = (short) (-1.0f * slope * qTime);
+	/* Fourth quarter: min -> 0 */
 	} else {
-		value = (short) (-1.0f * slope * timeInCycle);
+		float qTime = (timeInCycle - (3.0f * period / 4.0f));
+		value = (short) (slope * qTime) + SHRT_MIN;
 	}
 
 	*(sample->data) = value;
