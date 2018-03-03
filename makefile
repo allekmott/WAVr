@@ -1,17 +1,29 @@
 CC=gcc
-CFLAGS=-lm -lpthread
+CFLAGS=-Wall -std=c89 -MD
 
 EXE=wavr
-
 DEPS=signal.h wavr.h wav.h
+OBJS=signal.o wavr.o wav.o
 
-OBJ_DEPS=signal.o wavr.o wav.o
+.PHONY: all
+all: $(EXE)
 
 %.o: $.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-$(EXE): $(OBJ_DEPS)
+$(EXE): $(OBJS)
 	$(CC) -o $@ $^ $(CFLAGS)
 
+.PHONY: rebuild
+rebuild: clean all
+
+.PHONY: clean
 clean:
-	rm -f $(EXE) *.o *.wav *~
+	rm -f $(EXE)
+	rm -f *.o
+	rm -f *.d
+	rm -f *.wav
+	rm -f *~
+
+-include $(OBJS:.o=.d)
+

@@ -3,11 +3,11 @@
  * Created: 20 Dec 2015
  */
 
+#ifndef __WAVR_WAV_H__
+#define __WAVR_WAV_H__
+
 #include <stdio.h>
 #include <stdint.h>
-
-#ifndef WAV_H
-#define WAV_H
 
 struct WavHeader {
 	char ChunkID[4];
@@ -56,4 +56,5 @@ void write_wav_file(char *filename, struct WavFile *wav);
 struct WavFile *read_wav_file(char *filename);
 void sigspec_from_wav(struct WavFile *wav, struct signal_spec *sigspec);
 
-#endif
+#endif /* __WAVR_WAV_H__ */
+

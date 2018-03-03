@@ -3,13 +3,13 @@
  * Created: 20 Dec 2015
  */
 
+#ifndef __WAVR_SIGNAL_H__
+#define __WAVR_SIGNAL_H__
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "wav.h"
-
-#ifndef SIGNAL_H
-#define SIGNAL_H
 
 /* Data structure to store sample information
  * Keeps track of sample's position in signal
@@ -72,4 +72,5 @@ short *alloc_buffer(struct signal_spec *sigspec);
 /* Dump raw samples to standard output */
 void sample_dump(short *buffer, struct signal_spec *sigspec);
 
-#endif
+#endif /* __WAVR_SIGNAL_H__ */
+

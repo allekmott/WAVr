@@ -59,7 +59,6 @@ short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *),
 	size_t bufferSize = bytesize_gen(sigspec);
 
 	int numberOfSamples = bufferSize / sizeof(short);
-	int sampleNo;
 
 	/* time delta per sample (in seconds) */
 	float tStep = 1.0 / (float) sigspec->sample_rate;

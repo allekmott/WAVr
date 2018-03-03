@@ -4,10 +4,10 @@
  * Created: 14 January 2016
  */
 
-#include "wav.h"
+#ifndef __WAVR_H__
+#define __WAVR_H__
 
-#ifndef WAVR_H
-#define WAVR_H
+#include "wav.h"
 
 #define DEFAULT_SAMPLE_RATE 41000
 #define DEFAULT_SIGNAL_FREQUENCY 1000.0f
@@ -36,4 +36,5 @@ void help(const char *cmd);
 void handle_args(struct wavr_args *args, int argc, char *argv[]);
 
 
-#endif
+#endif /* __WAVR_H__ */
+

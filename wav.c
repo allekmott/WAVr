@@ -89,8 +89,6 @@ struct WavFile *read_wav_file(char *filename) {
 		exit(1);
 	}
 
-	//printf("\nReading file '%s'\n", filename);
-
 	/* file open, allocate room for structs */
 	struct WavFile *wav = empty_wavfile();
 
