@@ -4,126 +4,125 @@
  * Created: 15 Jan 2016
  */
 
-#include <time.h>
-#include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "wav.h"
-#include "signal.h"
 
-struct WavFile *empty_wavfile() {
-	struct WavFile *wav = malloc(sizeof(struct WavFile));
-	wav->wavHeader = malloc(sizeof(struct WavHeader));
-	wav->formatHeader = malloc(sizeof(struct FormatHeader));
-	wav->dataHeader = malloc(sizeof(struct DataHeader));
-
-	return wav;
+static void wav_init_header(struct wav_header *header) {
+	memset(header, 0, sizeof(struct wav_header));
+	memcpy(&header->base_chunk, &BARE_RIFF_BASE_CHUNK,
+			sizeof(struct riff_base_chunk));
+	memcpy(&header->format_chunk, &BARE_WAV_FORMAT_CHUNK,
+			sizeof(struct wav_format_chunk));
+	memcpy(&header->data_chunk, &BARE_WAV_DATA_CHUNK,
+			sizeof(struct wav_data_chunk));
 }
 
-void free_wavfile(struct WavFile *wav) {
-	free(wav->wavHeader);
-	free(wav->formatHeader);
-	free(wav->dataHeader);
-	free(wav->data);
-	free(wav);
+void wav_set_audio_format
+(struct wav_file *file, struct wav_audio_format *format) {
+	memcpy(&file->header.format_chunk.format, format,
+			sizeof(struct wav_audio_format));
 }
 
-struct WavFile *init_wav_file(struct signal_spec *sigspec) {
-	/* grab an empty struct */
-	struct WavFile *wav = empty_wavfile();
+void wav_add_samples
+(struct wav_file *file, void *samples, int *n_samples, int offset) {
 
-	/* fill out header info stuff */
-	strncpy(wav->wavHeader->ChunkID, "RIFF", 4);
-	wav->wavHeader->ChunkSize = (sizeof(struct WavHeader));
-	strncpy(wav->wavHeader->RIFFType, "WAVE", 4);
-
-	strncpy(wav->formatHeader->ChunkID, "fmt ", 4);
-	wav->formatHeader->ChunkSize = 16;
-	wav->formatHeader->CompressionCode = 1;
-	wav->formatHeader->Channels = 1;
-	wav->formatHeader->SampleRate = (uint32_t) sigspec->sample_rate; /* lol */
-	wav->formatHeader->SigBitsPerSamp = 16;
-	wav->formatHeader->BlockAlign = 2;
-	wav->formatHeader->AvgBytesPerSec = wav->formatHeader->BlockAlign * sigspec->sample_rate;
-
-	strncpy(wav->dataHeader->ChunkID, "data", 4);
-	wav->dataHeader->ChunkSize = bytesize_gen(sigspec);
-	return wav;
 }
 
-void write_wav_file(char *filename, struct WavFile *wav) {
-	/* set up clock_t's and grab start time */
-	clock_t start, diff;
-	start = clock();
+struct wav_file *wav_new_file(const char *path) {
+	struct wav_file *file;
 
-	/* openy openy */
-	FILE *out = fopen(filename, "wb");
-	if (out == NULL) {
-		fprintf(stderr, "Unable to open file '%s' for writing\n", filename);
-		exit(1);
-	}
-	printf("Writing to '%s'\n", filename);
+	if (!(file = calloc(1, sizeof(struct wav_file))))
+		return NULL;
 
-	/* ... and thats really all that has to be done before writing. */
-	fwrite(wav->wavHeader, sizeof(struct WavHeader), 1, out);
-	fwrite(wav->formatHeader, sizeof(struct FormatHeader), 1, out);
-	fwrite(wav->dataHeader, sizeof(struct DataHeader), 1, out);
+	file->path = path;
 
-	/* data header's ChunkSize is literally the size of the sample array */
-	fwrite(wav->data, wav->dataHeader->ChunkSize, 1, out);
+	/* new wav file -> bare header for now */
+	wav_init_header(&file->header);
 
-	/* calculated elasped time */
-	diff = clock() - start;
-	float elapsed = (float) diff / (float) CLOCKS_PER_SEC;
-
-	printf("Write complete (%.2fs)\n", elapsed);
-	fclose(out);
+	return file;
 }
 
-struct WavFile *read_wav_file(char *filename) {
-	/* aight, let's try to open this dude */
-	FILE *in = fopen(filename, "rb");
-	if (in == NULL) {
-		fprintf(stderr, "Unable to open file '%s' for reading\n", filename);
-		exit(1);
+struct wav_file *wav_open_file(const char *path) {
+	struct wav_file *file;
+
+	int fd;
+	size_t n_total_read, n_read;
+
+	if ((fd = open(path, O_RDONLY | O_EXCL)) == -1)
+		return NULL;
+
+	if (!(file = calloc(1, sizeof(struct wav_file)))) {
+		close(fd);
+		return NULL;
 	}
 
-	/* file open, allocate room for structs */
-	struct WavFile *wav = empty_wavfile();
+	file->path = path;
 
-	/* read in headers so we know how many samples we're looking at */
-	fread(wav->wavHeader, sizeof(struct WavHeader), 1, in); /* Wav Header */
-	fread(wav->formatHeader, sizeof(struct FormatHeader), 1, in); /* Format Header */
-	fread(wav->dataHeader, sizeof(struct DataHeader), 1, in); /* Data Header */
+	/* existing wav file -> attempt to read in header */
+	n_total_read = 0;
+	while (n_total_read < sizeof(struct wav_header)) {
+		n_read = read(fd, &file->header, sizeof(struct wav_header));
+		if (n_read < 1) {
+			close(fd);
+			free(file);
 
-	size_t sizeToRead = wav->dataHeader->ChunkSize;
-	/*printf("%d bytes to be read / %ikHz -> %.2fs\n", wav->dataHeader->ChunkSize,
-			wav->formatHeader->SampleRate / 1000,
-			(float) wav->dataHeader->ChunkSize / (float) wav->formatHeader->SampleRate);*/
-	
-	/* most problematic allocation, so we'll just make sure here... */
-	short *data = malloc(sizeToRead);
-	if (data == NULL) {
-		fprintf(stderr, "Unable to allocate %d bytes for data segment...\n", (int) sizeToRead);
-		free_wavfile(wav);
-		exit(1);
+			return NULL;
+		}
+
+		n_total_read += n_read;
 	}
 
-	fread(data, sizeToRead, 1, in); /* read dem samples in */
-	wav->data = data; /* make sure wav actually gets his samples */
-
-	fclose(in);
-
-	/* all done! */
-	return wav;
+	close(fd);
+	return file;
 }
 
-void sigspec_from_wav(struct WavFile *wav, struct signal_spec *sigspec) {
-	sigspec->sample_rate = wav->formatHeader->SampleRate;
-	sigspec->frequency = -1.0f;
+int wav_save_file(const struct wav_file *file) {
+	int fd;
+	size_t n_total_written, n_written, data_size;
 
-	/* ah, duration. */
-	float duration = (float) wav->dataHeader->ChunkSize / (float) wav->formatHeader->SampleRate;
-	sigspec->duration = duration;
+	if ((fd = open(file->path, O_WRONLY | O_CREAT)) == -1)
+		return -1;
+
+	/* write header */
+	n_total_written = 0;
+	while (n_total_written < sizeof(struct wav_header)) {
+		n_written = write(fd, &file->header, sizeof(struct wav_header));
+		if (n_written < 1)
+			goto error;
+
+		n_total_written += n_written;
+	}
+
+	/* write samples */
+	data_size = file->header.data_chunk.chunk_size;
+
+	n_total_written = 0;
+	while (n_total_written < data_size) {
+		n_written = write(fd, &file->samples, data_size);
+		if (n_written < 1)
+			goto error;
+
+		n_total_written += n_written;
+	}
+
+	close(fd);
+	return 0;
+
+error:
+	close(fd);
+	return -1;
+}
+
+void wav_free_file(struct wav_file *file) {
+	if (!file)
+		return;
+
+	if (file->samples)
+		free(file->samples);
+
+	free(file);
 }
