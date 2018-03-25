@@ -1,18 +1,20 @@
-/* wavr.c
- * Main thingy
- * 5p4wn wav file
- * Created: 20 Dec 2015
+/**
+ * @file	wavr.c
+ * @author	Allek Mott <allekmott@gmail.com>
+ * @date	20 December 2015
+ * @brief	Entry point for WAVr. Handles command line args & WAVz
  */
 
 #include <errno.h>
 #include <fcntl.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 
+#include "util.h"
 #include "wav.h"
+
 #include "wavr.h"
 
 int main(int argc, char *argv[]) {
@@ -57,7 +59,9 @@ int main(int argc, char *argv[]) {
 			case 'c': /* TODO: reimplement this */
 			case 'j': /* TODO: reimplement this */
 			case 'w': /* TODO: reimplement this */
-			case 'h': printf("%s\n", WAVR_HELP_MSG); return 0;
+			case 'h':
+				printf("WAVr v%s\n\n%s\n", WAVR_VERSION, WAVR_HELP_MSG);
+				return 0;
 		}
 	}
 
@@ -70,32 +74,4 @@ int main(int argc, char *argv[]) {
 	printf("Finished sample generation.\n");
 
 	return 0;
-}
-
-void usage(const char *cmd) {
-	printf("Usage: %s <args>\n", cmd);
-	exit(0);
-}
-
-unsigned long str_to_us_time(const char *s_time) {
-	float n_time_s;
-
-	if (sscanf(s_time, "%f", &n_time_s) != 1)
-		return 0;
-
-	return time_stous(n_time_s);
-}
-
-char *us_time_to_str(unsigned long n_time_s, char *s_time) {
-	sprintf(s_time, "%.2f", time_ustos(n_time_s));
-	return s_time;
-}
-
-float str_to_freq(const char *s_freq) {
-	float n_freq;
-
-	if (sscanf(s_freq, "%f", &n_freq) != 1)
-		n_freq = -1.0f;
-
-	return n_freq;
 }

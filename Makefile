@@ -2,8 +2,8 @@ CC=gcc
 CFLAGS=-Wall -std=c89 -MD
 
 EXE=wavr
-DEPS=wavr.h wav.h
-OBJS=wavr.o wav.o
+DEPS=util.h wav.h generator.h wavr.h
+OBJS=util.o wav.o generator.o wavr.o
 
 .PHONY: all
 all: $(EXE)
