@@ -4,8 +4,8 @@
  * Created: 20 Dec 2015
  */
 
+#include <errno.h>
 #include <fcntl.h>
-#include <pthread.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,75 +14,62 @@
 
 #include "wav.h"
 #include "wavr.h"
-#include "signal.h"
-
-#define WAVR_VERSION "0.5.4"
 
 int main(int argc, char *argv[]) {
-	struct signal_spec sigspec = {DEFAULT_SAMPLE_RATE,
-		DEFAULT_SIGNAL_FREQUENCY,
-		DEFAULT_SIGNAL_DURATION};
+	struct wav_file *file;
 
-	struct wavr_args args;
-	/* args.in_filename only initialized if necessary */
-	args.out_filename = DEFAULT_OUTFILE;
-	args.sample_dump = 0;
-	args.thread_count = 1;
-	args.input = INPUT_NONE; /* generate samples by default */
-	args.sigspec = &sigspec;
-	args.generator = samplegen_sine; /* generate sine by default */
+	char flag, s_time[128];
+	int optind, optopt;
 
-	struct WavFile *wav;
+	char dump_samples;
 
-	handle_args(&args, argc, argv);
+	char *output_path;
+	enum sample_rate sample_rate;
+	unsigned long duration, s_duration;
+	float frequency;
 
-	int oldstdout = dup(1);
-	if (args.sample_dump) {
-		/* exclusively output samples -> suppress all other output */
-		freopen("/dev/null", "w", stdout);
+	/* defaults */
+	output_path = "wavr_out.wav";
+	sample_rate = SAMPLE_RATE_44100;	/* default to 44.1 kHz */
+	duration = 1e6;						/* 1000000 us = 1s */
+	frequency = 1e3f;					/* 1000 Hz */
+
+	/* parse args */
+	while ((flag = getopt(argc, argv, "o:pd:f:ls:i:cj:w:h")) != -1) {
+		switch (flag) {
+			case 'o': output_path = optarg; break;
+			case 'p': /* TODO: dump samples */ break;
+			case 'd':
+				if (!(duration = str_to_us_time(optarg))) {
+					lame("Invalid duration value: %s\n", optarg);
+					return EINVAL;
+				}
+				break;
+			case 'f':
+				if (!(sscanf(optarg, "%f", &frequency))) {
+					lame("Invalid frequency value: %s\n", optarg);
+					return EINVAL;
+				}
+				break;
+			case 'l': /* TODO: reimplement this */ break;
+			case 's': /* TODO: reimplement this */ break;
+			case 'i': output_path = optarg; break;
+			case 'c': /* TODO: reimplement this */
+			case 'j': /* TODO: reimplement this */
+			case 'w': /* TODO: reimplement this */
+			case 'h': printf("%s\n", WAVR_HELP_MSG); return 0;
+		}
 	}
 
-	printf("WAVr v%s\n", WAVR_VERSION);
+	printf("WAVr v%s\n\n", WAVR_VERSION);
 
-	switch (args.input) {
-		case INPUT_NONE:
-			/* No input -> generate samples */
-			wav = init_wav_file(&sigspec);
+	printf("Output file: %s\nDuration:    %ss\nFrequency:   %.2f Hz\n",
+			output_path, us_time_to_str(duration, s_time), frequency);
 
-			printf("\nGenerating samples (%i thread(s))...\n", args.thread_count);
-			wav->data = gen_sig(&sigspec, args.generator, args.thread_count);
-			
-			printf("Finished sample generation.\n");
-			break;
-		case INPUT_STDIN:
-			/* Parse samples from stdin */
-			printf("Reading samples in from stdin...\n");
+	printf("\nGenerating samples...\n");
+	printf("Finished sample generation.\n");
 
-			wav = init_wav_file(&sigspec);
-			wav->data = parse_sig(&sigspec, stdin);
-			break;
-		case INPUT_FILE:
-			/* Pull samples from input file */
-			wav = read_wav_file(args.in_filename);
-			sigspec_from_wav(wav, &sigspec);
-			break;
-		default: exit(1); /* lol? */
-	}
-
-	if (!args.sample_dump) {
-		/* no dump, so writeout */
-		write_wav_file(args.out_filename, wav);
-	} else {
-		/* restore stdout */
-		fclose(stdout);
-		stdout = fdopen(oldstdout, "w");
-
-		sample_dump(wav->data, &sigspec);	
-	}
-
-	/* cleanup */
-	free_wavfile(wav);
-	pthread_exit(NULL);
+	return 0;
 }
 
 void usage(const char *cmd) {
@@ -90,119 +77,25 @@ void usage(const char *cmd) {
 	exit(0);
 }
 
-void help(const char *cmd) {
-	printf("Usage: %s <args>\n", cmd);
+unsigned long str_to_us_time(const char *s_time) {
+	float n_time_s;
 
-	printf("Flags: \n"
-		"-o <out_file>\t\tOutput wav to <out_file>\n"
-		"-d\t\t\tDump samples to standard out (skip wav formatting)\n"
-		"-t <duration>\t\tSet signal length to <duration> (s)\n"
-		"-f <frequency>\t\tSet signal frequency to <frequency> Hz\n"
-		"-s <sampleRate>\t\tSet signal sample rate to <sampleRate> Hz\n"
-		"-l\t\t\tList available sample rates\n"
-		"-i <in_file>\t\tInput wav from <in_file>\n"
-		"-c\t\t\tInput samples from standard input\n"
-		"-j <number>\t\tChange generation thread count\n"
-		"-w <waveform>\t\tSet waveform (triangle, square, sine)\n"
-		"-h\t\t\tWhat you just did\n");
+	if (sscanf(s_time, "%f", &n_time_s) != 1)
+		return 0;
 
-	exit(0);
+	return time_stous(n_time_s);
 }
 
-void handle_args(struct wavr_args *args, int argc, char *argv[]) {
-	int c;
-	extern int optind, optopt;
+char *us_time_to_str(unsigned long n_time_s, char *s_time) {
+	sprintf(s_time, "%.2f", time_ustos(n_time_s));
+	return s_time;
+}
 
-	while ((c = getopt(argc, argv, "o:dt:f:ls:i:cj:w:h")) != -1) {
-		switch (c) {
-			/* set output filename */
-			case 'o': args->out_filename = optarg; break;
-			
-			/* dump samples directly to command line
-			 * completely bypasses wav formatting
-			 */
-			case 'd': args->sample_dump = 1; break;
+float str_to_freq(const char *s_freq) {
+	float n_freq;
 
-			/* set duration of waveform */
-			case 't':
-				args->sigspec->duration = atof(optarg);
-				if (args->sigspec->duration <= 0.0f) {
-					usage(argv[0]);
-					exit(0);
-				}
-				break;
+	if (sscanf(s_freq, "%f", &n_freq) != 1)
+		n_freq = -1.0f;
 
-			/* set frequency of waveform */	
-			case 'f': 
-				args->sigspec->frequency = atof(optarg);
-				if (args->sigspec->frequency <= 0.0f) {
-					usage(argv[0]);
-					exit(0);
-				}
-				break;
-
-			/* set waveform sample rate */
-			case 's':
-				args->sigspec->sample_rate = atoi(optarg);
-				if (args->sigspec->sample_rate == 44100 ||
-					args->sigspec->sample_rate == 48000 ||
-					args->sigspec->sample_rate == 88200 ||
-					args->sigspec->sample_rate == 96000)
-						break;
-				else
-					printf("Invalid sample rate: %i Hz\n", args->sigspec->sample_rate);
-					exit(1);
-					break;
-
-			/* list available sample rates */
-			case 'l':
-				printf("Available sample rates:\n\n"
-					"44,100 Hz (44.1 kHz)\n"
-					"48,000 Hz (48.0 kHz)\n"
-					"88,200 Hz (88.2 kHz)\n"
-					"96,000 Hz (96.0 kHz)\n");
-				exit(0);
-				break;
-
-			/* specify input file */
-			case 'i':
-				args->input = INPUT_FILE;
-				args->in_filename = optarg;
-				break;
-
-			/* specify thread count */
-			case 'j':
-				args->thread_count = atoi(optarg);
-				if (args->thread_count < 1) {
-					printf("Invalid thread count: %i\n", args->thread_count);
-					exit(1);
-				}
-				break;
-
-			/* input sample values from stdin */
-			case 'c':
-				/*printf("Parsing samples from standard input\n");*/
-				args->input = INPUT_STDIN;
-				break;
-
-			/* set waveform for generation */
-			case 'w':
-				if (!strcmp(optarg, "sine"))
-					args->generator = (void *) samplegen_sine;
-				else if (!strcmp(optarg, "triangle"))
-					args->generator = (void *) samplegen_triangle;
-				else if (!strcmp(optarg, "square"))
-					args->generator = (void *) samplegen_square;
-				else {
-					printf("Invalid waveform: %s\n", optarg);
-					exit(1);
-				}
-				break;
-
-			case 'h': help(argv[0]); break;
-
-			/* wtf */
-			case '?': usage(argv[0]); exit(0); break;
-		}
-	}
+	return n_freq;
 }

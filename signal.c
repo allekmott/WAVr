@@ -13,34 +13,6 @@
 #include "wav.h"
 #include "signal.h"
 
-size_t bytesize_gen(struct signal_spec *sigspec) {
-	/* buffer length (samples) = duration (seconds) * sample rate (samples/sec) */
-	size_t bufferLength = sigspec->duration * sigspec->sample_rate;
-
-	/* sample size set at short (for now) */
-	size_t sampleSize = sizeof(short);
-
-	/* size of buffer (bytes) = buffer length (samples) * sample size (bytes/sample) */
-	return (bufferLength * sampleSize);
-}
-
-short *alloc_buffer(struct signal_spec *sigspec) {
-	short *buffer;
-
-	/* (see bytesize_gen for calculation of buffer size) */
-	size_t bufferSize = bytesize_gen(sigspec);
-
-	buffer = malloc(bufferSize);
-
-	if (buffer == NULL) {
-		fprintf(stderr, "Unable to allocate memory for sample buffer\n"
-			"\tDesired buffer size: %zub\n", bufferSize);
-		exit(1);
-	}
-
-	return buffer;
-}
-
 short *gen_sig(struct signal_spec *sigspec, void (*samplegen) (struct sample *), int thread_count) {
 	/* Helpful printout */
 	printf("\nSignal info:\n"
