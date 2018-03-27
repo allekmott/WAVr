@@ -27,8 +27,11 @@ void wav_set_audio_format
 			sizeof(struct wav_audio_format));
 }
 
-void wav_add_samples
-(struct wav_file *file, void *samples, int *n_samples, int offset) {
+void
+wav_add_samples(struct wav_file *file,
+				void *samples,
+				int *n_samples,
+				int offset) {
 
 }
 

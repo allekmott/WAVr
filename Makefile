@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall -std=c89 -MD
 
 EXE=wavr
-DEPS=util.h wav.h generator.h wavr.h
+DEPS=util.h wav.h signal.h generator.h wavr.h
 OBJS=util.o wav.o generator.o wavr.o
 
 .PHONY: all

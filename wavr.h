@@ -9,14 +9,6 @@
 
 #define WAVR_VERSION "0.6.0"
 
-enum sample_rate {
-	SAMPLE_RATE_32000,
-	SAMPLE_RATE_44100,
-	SAMPLE_RATE_48000,
-	SAMPLE_RATE_96000,
-	SAMPLE_RATE_192000
-};
-
 enum input_method {
 	INPUT_NONE, /* => sample generation */
 	INPUT_STDIN,

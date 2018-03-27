@@ -74,15 +74,18 @@ struct wav_header {
 struct wav_file {
 	const char *path;
 	struct wav_header header;	/* file header */
-	void *samples;					/* samples */
+	void *samples;				/* samples */
 };
 
 /* Write audio format info to header */
-void wav_set_audio_format
-(struct wav_file *file, struct wav_audio_format *format);
+void
+wav_set_audio_format(struct wav_file *file, struct wav_audio_format *format);
 
-void wav_add_samples
-(struct wav_file *file, void *samples, int *n_samples, int offset);
+void
+wav_add_samples(struct wav_file *file,
+				void *samples,
+				int *n_samples,
+				int offset);
 
 #define wav_append_samples(f, s, n) wav_add_samples(f, s, n, 0)
 

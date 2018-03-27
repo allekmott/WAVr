@@ -9,22 +9,26 @@
 #ifndef __WAVR_GENERATOR_H__
 #define __WAVR_GENERATOR_H__
 
-struct signal_params {
-	unsigned int	sample_rate;	/* signal sample rate */
-	float			frequency;		/* waveform frequency */
-	unsigned long 	duration;		/* duration of signal in (us) */
-	long			t_offset;		/* offset from t=0 to begin (us) */
-	void			*buffer;		/* pointer to sample buffer */
+#include <limits.h>
+
+#include "signal.h"
+
+/* available waveform types */
+enum wavr_waveform {
+	WAVR_WAVEFORM_SINE,		/* sine wave generator */
+	WAVR_WAVEFORM_SQUARE,	/* square wave generator */
+	WAVR_WAVEFORM_TRIANGLE	/* triangle wave generator */
 };
 
 /* Generates & renders samples using the provided generator function */
-int generate_signal(
-		unsigned int sample_rate, float frequency, unsigned long duration,
-		void (*generator) (struct signal_params *));
+int
+wavr_generate_signal(enum wavr_waveform waveform, struct wavr_signal *sig);
 
-/* some signal generators */
-void sine_generator(struct signal_params *params);
-void square_generator(struct signal_params *params);
-void triangel_generator(struct signal_params *params);
+/* ------------------------------ GENERATORS ------------------------------- */
+
+/* signal generation function; utilises */
+typedef int (*wavr_signal_generator_t) \
+	(struct wavr_signal *, unsigned long, unsigned long);
 
 #endif /* __WAVR_GENERATOR_H__ */
+
