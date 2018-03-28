@@ -14,21 +14,23 @@
 #include "signal.h"
 
 /* available waveform types */
-enum wavr_waveform {
-	WAVR_WAVEFORM_SINE,		/* sine wave generator */
-	WAVR_WAVEFORM_SQUARE,	/* square wave generator */
-	WAVR_WAVEFORM_TRIANGLE	/* triangle wave generator */
+enum waveform {
+	WAVEFORM_SINE,		/* sine wave generator */
+	WAVEFORM_SQUARE,	/* square wave generator */
+	WAVEFORM_TRIANGLE	/* triangle wave generator */
 };
 
 /* Generates & renders samples using the provided generator function */
-int
-wavr_generate_signal(enum wavr_waveform waveform, struct wavr_signal *sig);
+int generate_signal(enum waveform waveform, struct signal_desc *sig);
 
 /* ------------------------------ GENERATORS ------------------------------- */
 
-/* signal generation function; utilises */
-typedef int (*wavr_signal_generator_t) \
-	(struct wavr_signal *, unsigned long, unsigned long);
+/* Generic signal generator; Takes in description of signal, pointer to sample
+ * buffer, and # of samples to be generated */
+typedef int (*signal_generator_t) (struct signal_desc *, double *, int);
+
+/* Generic sample renderer; Takes in pointers to pre-rendered &
+ * post-rendered sample buffers & number of samples to render */
+typedef int (*sample_renderer_t) (double *, void *, int);
 
 #endif /* __WAVR_GENERATOR_H__ */
-

@@ -20,7 +20,7 @@ static const char *WAVR_HELP_MSG = "Misc Options:\n\
 \n\
 Output Options:\n\
 -o <out_file>		Output file (default = wavr.out.wav)\n\
--p			Dump stamples to console\n\
+-p			Dump samples to console\n\
 \n\
 Generator Options:\n\
 -d <seconds>		Duration of signal to be generated\n\

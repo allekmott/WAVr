@@ -19,8 +19,8 @@
 
 int main(int argc, char *argv[]) {
 	struct wav_file *file;
-	struct wavr_signal sig;
-	enum wavr_waveform waveform;
+	struct signal_desc sig;
+	enum waveform waveform;
 
 	char flag;
 	extern int optind, optopt;
@@ -29,16 +29,18 @@ int main(int argc, char *argv[]) {
 
 	char *output_path;
 
-	coolzero(&sig, sizeof(struct wavr_signal));
+	coolzero(&sig, sizeof(struct signal_desc));
 
 	/* defaults */
 	output_path		= "wavr_out.wav";
-	waveform		= WAVR_WAVEFORM_SINE;	/* sine wave */
+	waveform		= WAVEFORM_SINE;	/* sine wave */
 
-	sig.frequency 	= 1e6;					/* 1 kHz */
-	sig.amplitude	= INT_MAX;				/* 100% volume */
-	sig.duration	= 1e6;					/* 1 second */
-	sig.sample_rate	= 44100;				/* 44.1 kHz */
+	sig.frequency 	= 1e6;		/* 1 kHz */
+	sig.amplitude	= INT_MAX;	/* 100% volume */
+	sig.duration	= 1e6;		/* 1 second */
+
+	sig.format.sample_rate	= SAMPLE_RATE_44_1K;	/* 44.1 kHz */
+	sig.format.bit_depth	= SAMPLE_BIT_DEPTH_32;	/* 16-bit signed short */
 
 	/* parse args */
 	while ((flag = getopt(argc, argv, "o:pd:f:ls:i:cj:w:h")) != -1) {
@@ -80,7 +82,7 @@ int main(int argc, char *argv[]) {
 
 	printf("\nGenerating samples...\n");
 
-	wavr_generate_signal(waveform, &sig);
+	generate_signal(waveform, &sig);
 
 	printf("Finished sample generation.\n");
 

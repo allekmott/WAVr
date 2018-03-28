@@ -5,72 +5,140 @@
  * @brief	Core signal generation routines
  */
 
+#include <errno.h>
 #include <math.h>
 
 #include "util.h"
 #include "signal.h"
 #include "generator.h"
 
-static int sine_generator(struct wavr_signal *sig,
-		unsigned long n_samples, unsigned long offset);
-static int square_generator(struct wavr_signal *sig,
-		unsigned long n_samples, unsigned long offset);
-static int triangle_generator(struct wavr_signal *sig,
-		unsigned long n_samples, unsigned long offset);
+static int
+generate_sine(struct signal_desc *sig, double *samples, int count);
+
+static int
+generate_square(struct signal_desc *sig, double *samples, int count);
+
+static int
+generate_triangle(struct signal_desc *sig, double *samples, int count);
+
+static int render_samples_8bit(double *raw, void *rendered, int count);
+static int render_samples_16bit(double *raw, void *rendered, int count);
+static int render_samples_24bit(double *raw, void *rendered, int count);
+static int render_samples_32bit(double *raw, void *rendered, int count);
 
 /* mapping from waveform -> generator function */
-static wavr_signal_generator_t generators[] = {
-	sine_generator,		/* WAVR_WAVEFORM_SINE */
-	square_generator,	/* WAVR_WAVEFORM_SQUARE */
-	triangle_generator	/* WAVR_WAVEFORM_TRIANGLE */
+static const signal_generator_t generators[] = {
+	generate_sine,		/* WAVR_WAVEFORM_SINE */
+	generate_square,	/* WAVR_WAVEFORM_SQUARE */
+	generate_triangle	/* WAVR_WAVEFORM_TRIANGLE */
 };
 
-#define WAVR_GEN_BUFFER_SIZE (4096)
+#define BUFFER_SIZE 4096
 
 /* Generate signal & write to specified file */
-int wavr_generate_signal(
-		enum wavr_waveform waveform, struct wavr_signal *sig) {
-	wavr_signal_generator_t generator;
-	double buf[WAVR_GEN_BUFFER_SIZE];
+int generate_signal(enum waveform waveform, struct signal_desc *sig) {
+	signal_generator_t generator;
+	sample_renderer_t renderer;
+	unsigned long n_total_samples;
 
-	int i;
+	double raw_samples[BUFFER_SIZE];
+	void *rendered_samples;
+
+	unsigned long i;
 
 	generator = generators[waveform];
-	sig->samples = buf;
-	sig->n_samples = (sig->duration * sig->sample_rate) * 1e-3;
 
-	for (i = 0; i < sig->n_samples / WAVR_GEN_BUFFER_SIZE; i++)
-		generator(sig, WAVR_GEN_BUFFER_SIZE, i * WAVR_GEN_BUFFER_SIZE);
-
-	return 0;
-}
-
-/* Generate trigonometric sine wave */
-static int sine_generator(struct wavr_signal *sig,
-		unsigned long n_samples, unsigned long offset) {
-	unsigned long i;
-	double val;
-	double multiplier = freq_mhz_to_hz(sig->frequency) / sig->sample_rate;
-
-	printf("Generating %lu/%lu samples...\n", n_samples, sig->n_samples);
-
-	for (i = 0; i < n_samples; i++) {
-		val = sin((multiplier * i) + M_PI);
-		printf("%.05f\n", val);
+	switch (sig->format.bit_depth) {
+		case SAMPLE_BIT_DEPTH_8:	renderer = render_samples_8bit; break;
+		case SAMPLE_BIT_DEPTH_16:	renderer = render_samples_16bit; break;
+		case SAMPLE_BIT_DEPTH_24:	renderer = render_samples_24bit; break;
+		case SAMPLE_BIT_DEPTH_32:	renderer = render_samples_32bit; break;
+		default: return -EINVAL;
 	}
 
+	rendered_samples = calloc(BUFFER_SIZE, (sig->format.bit_depth / 8));
+	n_total_samples = (sig->format.sample_rate) * (sig->duration) * 1e-6;
+
+	for (i = 0; i < n_total_samples; i += BUFFER_SIZE) {
+		generator(sig, raw_samples, BUFFER_SIZE);
+		renderer(raw_samples, rendered_samples, BUFFER_SIZE);
+	}
+
+	return 0;
+};
+
+/* Generate trigonometric sine wave */
+static int
+generate_sine(struct signal_desc *sig, double *samples, int count) {
+	double multiplier;
+	int i;
+
+	multiplier = freq_mhz_to_hz(sig->frequency) / sig->format.sample_rate;
+
+	for (i = 0; i < count; i++)
+		*(samples + i) = sin((multiplier * i) + M_PI);
 
 	return 0;
 }
 
 /* Generate square wave */
-static int square_generator(struct wavr_signal *sig,
-		unsigned long n_samples, unsigned long offset) {
+static int
+generate_square(struct signal_desc *sig, double *samples, int count) {
 	return 0;
 }
 
 /* Generate trianglw wave */
-static int triangle_generator(struct wavr_signal *sig,
-		unsigned long n_samples, unsigned long offset) {
+static int
+generate_triangle(struct signal_desc *sig, double *samples, int count) {
+	return 0;
+}
+
+static int render_samples_8bit(double *raw, void *rendered, int count) {
+	unsigned char *out_samples;
+	int i;
+
+	out_samples = (unsigned char *) rendered;
+	for (i = 0; i < count; i++)
+		*(out_samples + i) = (unsigned char) ((*raw + i) * (double) CHAR_MAX);
+
+	return 0;
+}
+
+static int render_samples_16bit(double *raw, void *rendered, int count) {
+	short *out_samples;
+	int i;
+
+	/* 16bit -> short */
+	out_samples = (short *) rendered;
+	for (i = 0; i < count; i++)
+		*(out_samples + i) = (short) (*(raw + i) * (double) SHRT_MAX);
+
+	return 0;
+}
+
+static int render_samples_24bit(double *raw, void *rendered, int count) {
+	char *out_samples;
+	int i, i_val;
+
+	out_samples = (char *) rendered;
+	for (i = 0; i < count; i++) {
+		/* since 24-bit isn't symmetric, this one's a bit weird */
+		i_val = (int)(*(raw + i) * (double) (INT_MAX >> 8));
+
+		/* copy lower three bytes of in into buffer */
+		memcpy((rendered + (i * 3)), ((char *) &i_val) + 1, sizeof(char) * 3);
+	}
+
+	return 0;
+}
+
+static int render_samples_32bit(double *raw, void *rendered, int count) {
+	float *out_samples;
+	int i;
+
+	out_samples = (float *) rendered;
+	for (i = 0; i < count; i++)
+		*(out_samples + i) = (float) *(raw + i);
+
 	return 0;
 }
