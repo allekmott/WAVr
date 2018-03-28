@@ -33,7 +33,7 @@ static const signal_generator_t generators[] = {
 	generate_triangle	/* WAVR_WAVEFORM_TRIANGLE */
 };
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 4096 << 4
 
 /* Generate signal & write to specified file */
 int generate_signal(enum waveform waveform, struct signal_desc *sig) {

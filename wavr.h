@@ -23,10 +23,12 @@ Output Options:\n\
 -p			Dump samples to console\n\
 \n\
 Generator Options:\n\
--d <seconds>		Duration of signal to be generated\n\
+-w <waveform>		Type of signal to generate (sine, square, triange)\n\
 -f <frequency>		Frequency of signal to be generated\n\
--t <thread_count>	Number of worker threads to use\n\
--w <waveform>		Type of signal to generate (sine, square, triange)";
+-d <duration>		Duration of signal to be generated in seconds\n\
+-s <sample_rate>	Sample rate in kHz or Hz (44.1, 96000, ...)\n\
+-b <bit_depth>		Sample bit depth (8, 16, 24, or 32)\n\
+-t <thread_count>	Number of worker threads to use";
 
 #endif /* __WAVR_H__ */
 

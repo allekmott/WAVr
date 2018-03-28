@@ -40,10 +40,10 @@ int main(int argc, char *argv[]) {
 	sig.duration	= 1e6;		/* 1 second */
 
 	sig.format.sample_rate	= SAMPLE_RATE_44_1K;	/* 44.1 kHz */
-	sig.format.bit_depth	= SAMPLE_BIT_DEPTH_32;	/* 16-bit signed short */
+	sig.format.bit_depth	= SAMPLE_BIT_DEPTH_16;	/* 16-bit signed short */
 
 	/* parse args */
-	while ((flag = getopt(argc, argv, "o:pd:f:ls:i:cj:w:h")) != -1) {
+	while ((flag = getopt(argc, argv, "o:pd:f:ls:b:i:cj:w:h")) != -1) {
 		switch (flag) {
 			case 'o': output_path = optarg; break;
 			case 'p': /* TODO: dump samples */ break;
@@ -60,7 +60,20 @@ int main(int argc, char *argv[]) {
 				}
 				break;
 			case 'l': /* TODO: reimplement this */	break;
-			case 's': /* TODO: reimplement this */	break;
+			case 's':
+				/* sample rate */
+				if (!(sig.format.sample_rate = str_to_sample_rate(optarg))) {
+					lame("Invalid sample rate: %s\n", optarg);
+					return EINVAL;
+				}
+				break;
+			case 'b':
+				/* bit depth */
+				if (!(sig.format.bit_depth = str_to_bit_depth(optarg))) {
+					lame("Invalid bit depth: %s\n", optarg);
+					return EINVAL;
+				}
+				break;
 			case 'i': /* TODO: reimplement this */	break;
 			case 'c': /* TODO: reimplement this */	break;
 			case 'j': /* TODO: reimplement this */	break;
@@ -75,10 +88,18 @@ int main(int argc, char *argv[]) {
 
 	printf("WAVr v%s\n\n", WAVR_VERSION);
 
-	printf("Output file: %s\nDuration:    %.2f s\nFrequency:   %.2f Hz\n",
+	printf("Output file: %s\n"
+			"Duration:    %.2f s\n"
+			"Frequency:   %.2f Hz\n"
+			"Sample rate: %.01f kHz\n"
+			"Bit depth:   %i bit\n"
+			"Approx size: %lu b\n",
 			output_path,
 			time_us_to_s(sig.duration),
-			freq_mhz_to_hz(sig.frequency));
+			freq_mhz_to_hz(sig.frequency),
+			sig.format.sample_rate * 1.0e-3,
+			sig.format.bit_depth,
+			signal_size_bytes(&sig));
 
 	printf("\nGenerating samples...\n");
 

@@ -14,8 +14,10 @@
 #include <errno.h>
 #include <math.h>
 
-/* wrpap memset in bzero interface */
+/* wrap memset in bzero interface */
 #define coolzero(buf, size) memset((buf), 0, (size))
+
+/* ---------------------------------- Time --------------------------------- */
 
 /* float seconds -> long nanoseconds */
 #define time_s_to_us(n_time_s) (round((n_time_s) * 1e6))
@@ -24,6 +26,8 @@
 /* parse string time (seconds) into numeric time (microseconds)
  * returns 0 on failure */
 unsigned long str_to_time_us(const char *s_time);
+
+/* 0------------------------------- Signals -------------------------------- */
 
 /* float hz to unsigned int mhz */
 #define freq_hz_to_mhz(n_freq_hz) ((unsigned int) ((n_freq_hz) * 1.0e3))
@@ -34,6 +38,8 @@ unsigned long str_to_time_us(const char *s_time);
 /* parse string into integer frequency value (milihertz)
  * returns 0 on failure */
 unsigned int str_to_freq_mhz(const char *s_freq);
+
+/* -------------------------------- Logging -------------------------------- */
 
 /* print warning message */
 #define lame(args...) fprintf(stderr, args)
