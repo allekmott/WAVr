@@ -74,10 +74,16 @@ int main(int argc, char *argv[]) {
 					return EINVAL;
 				}
 				break;
+			case 'w':
+				/* waveform */
+				if (!(waveform = str_to_waveform(optarg))) {
+					lame("Invalid waveform: %s\n", optarg);
+					return EINVAL;
+				}
+				break;
 			case 'i': /* TODO: reimplement this */	break;
 			case 'c': /* TODO: reimplement this */	break;
 			case 'j': /* TODO: reimplement this */	break;
-			case 'w': /* TODO: reimplement this */	break;
 			case 'h':
 				printf("WAVr v%s\n\n%s\n", WAVR_VERSION, WAVR_HELP_MSG);
 				return 0;
@@ -88,13 +94,15 @@ int main(int argc, char *argv[]) {
 
 	printf("WAVr v%s\n\n", WAVR_VERSION);
 
-	printf("Output file: %s\n"
+	printf("Output file: %s\n\n"
+			"Waveform:    %s\n"
 			"Duration:    %.2f s\n"
 			"Frequency:   %.2f Hz\n"
 			"Sample rate: %.01f kHz\n"
 			"Bit depth:   %i bit\n"
 			"Approx size: %lu b\n",
 			output_path,
+			waveform_name(waveform),
 			time_us_to_s(sig.duration),
 			freq_mhz_to_hz(sig.frequency),
 			sig.format.sample_rate * 1.0e-3,

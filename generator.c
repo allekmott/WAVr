@@ -7,6 +7,9 @@
 
 #include <errno.h>
 #include <math.h>
+#include <limits.h>
+#include <string.h>
+#include <stdio.h>
 
 #include "util.h"
 #include "signal.h"
@@ -32,6 +35,30 @@ static const signal_generator_t generators[] = {
 	generate_square,	/* WAVR_WAVEFORM_SQUARE */
 	generate_triangle	/* WAVR_WAVEFORM_TRIANGLE */
 };
+#define waveform_generator(waveform) generators[(waveform) - 1]
+
+enum waveform str_to_waveform(const char *s_waveform) {
+	int n_waveform;
+
+	if (sscanf(s_waveform, "%i", &n_waveform)) {
+		/* already provided numeric value */
+		if (n_waveform >= WAVEFORM_START_VAL && n_waveform <= WAVEFORM_END_VAL)
+			return n_waveform;
+		else
+			return WAVEFORM_INVAL;
+	} else {
+		/* not provided numeric value, compare strings */
+		for (n_waveform = WAVEFORM_START_VAL;
+				n_waveform <= WAVEFORM_END_VAL;
+				n_waveform++) {
+			if (!strcmp(waveform_name(n_waveform), s_waveform))
+				return n_waveform;
+		}
+
+		/* didn't match anything */
+		return WAVEFORM_INVAL;
+	}
+}
 
 #define BUFFER_SIZE 4096 << 4
 
@@ -39,15 +66,18 @@ static const signal_generator_t generators[] = {
 int generate_signal(enum waveform waveform, struct signal_desc *sig) {
 	signal_generator_t generator;
 	sample_renderer_t renderer;
+
 	unsigned long n_total_samples;
 
 	double raw_samples[BUFFER_SIZE];
 	void *rendered_samples;
 
+	size_t sample_size, rendered_buffer_size;
 	unsigned long i;
 
-	generator = generators[waveform];
+	generator = waveform_generator(waveform);
 
+	/* pick renderer for signal's bit depth */
 	switch (sig->format.bit_depth) {
 		case SAMPLE_BIT_DEPTH_8:	renderer = render_samples_8bit; break;
 		case SAMPLE_BIT_DEPTH_16:	renderer = render_samples_16bit; break;
@@ -56,12 +86,22 @@ int generate_signal(enum waveform waveform, struct signal_desc *sig) {
 		default: return -EINVAL;
 	}
 
-	rendered_samples = calloc(BUFFER_SIZE, (sig->format.bit_depth / 8));
+	sample_size = sig->format.bit_depth / 8;
+	rendered_buffer_size = sample_size * BUFFER_SIZE;
+
+	rendered_samples = calloc(BUFFER_SIZE, sample_size);
 	n_total_samples = (sig->format.sample_rate) * (sig->duration) * 1e-6;
 
 	for (i = 0; i < n_total_samples; i += BUFFER_SIZE) {
+		/* generate samples */
 		generator(sig, raw_samples, BUFFER_SIZE);
+
+		/* convert samples to specified format */
 		renderer(raw_samples, rendered_samples, BUFFER_SIZE);
+
+		/* flush buffers */
+		coolzero(raw_samples, sizeof(double) * BUFFER_SIZE);
+		coolzero(rendered_samples, rendered_buffer_size);
 	}
 
 	return 0;
