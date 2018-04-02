@@ -17,7 +17,7 @@ struct wav_audio_format {
 	unsigned short	n_channels;			/* [lit] number of channels */
 	unsigned int	sample_rate;		/* [lit] sample rate, khz */
 	unsigned int	byte_rate;			/* [lit] average bytes/s */
-	unsigned short	block_align;		/* [lit] */
+	unsigned short	block_align;		/* [lit] # bytes/sample * # channels */
 	unsigned short	bit_depth;			/* [lit] bits/sample */
 };
 
@@ -43,58 +43,132 @@ struct wav_data_chunk {
 	unsigned int chunk_size;
 };
 
-static const struct riff_base_chunk BARE_RIFF_BASE_CHUNK = {
-	.chunk_id	= { 'R', 'I', 'F', 'F' },	/* this is a RIFF header */
-	.riff_type	= { 'W', 'A', 'V', 'E' }	/* this is a WAV file */
-
-	/* .chunk_size is directly dependent on file size, won't set until later */
-};
-
-static const struct wav_format_chunk BARE_WAV_FORMAT_CHUNK = {
-	.chunk_id	= { 'f', 'm', 't', ' ' },	/* format chunk */
-
-	/* size of this chunk is static, and its own size */
-	.chunk_size	= sizeof(struct wav_format_chunk)
-
-	/* .format will be provided later */
-};
-
-static const struct wav_data_chunk BARE_WAV_DATA_CHUNK = {
-	.chunk_id	= { 'd', 'a', 't', 'a' },
-	/* .chunk_size depends on size of contents that follow, save for later */
-};
-
+/* entire header */
 struct wav_header {
 	struct riff_base_chunk	base_chunk;		/* RIFF header */
 	struct wav_format_chunk	format_chunk;	/* Format chunk */
 	struct wav_data_chunk	data_chunk;		/* Data chunk */
 };
 
-/* simple wav file struct; header & contents */
-struct wav_file {
-	const char *path;
-	struct wav_header header;	/* file header */
-	void *samples;				/* samples */
+#define RIFF_CHUNK_ID	{ 'R', 'I', 'F', 'F' }
+#define RIFF_TYPE_WAVE	{ 'W', 'A', 'V', 'E' }
+static const struct riff_base_chunk BARE_RIFF_BASE_CHUNK = {
+	.chunk_id	= RIFF_CHUNK_ID,			/* this is a RIFF header */
+	.riff_type	= RIFF_TYPE_WAVE,			/* this is a WAV file */
+	.chunk_size = sizeof(struct wav_header) /* empty wav -> size of header */
 };
 
-/* Write audio format info to header */
-void
-wav_set_audio_format(struct wav_file *file, struct wav_audio_format *format);
+#define WAV_FORMAT_CHUNK_ID { 'f', 'm', 't', ' ' }
+static const struct wav_format_chunk BARE_WAV_FORMAT_CHUNK = {
+	.chunk_id	= WAV_FORMAT_CHUNK_ID,	/* format chunk */
 
-void
-wav_add_samples(struct wav_file *file,
-				void *samples,
-				int *n_samples,
-				int offset);
+	/* size of this chunk is static, and its own size */
+	.chunk_size	= sizeof(struct wav_format_chunk),
 
-#define wav_append_samples(f, s, n) wav_add_samples(f, s, n, 0)
+	/* defaults */
+	.format = {
+		.compression_code	= 1,		/* linear quantisation */
+		.n_channels			= 1,		/* mono */
+		.sample_rate		= 44100,	/* 44.1 kHz */
+		.byte_rate			= 88200,	/* 44.1 16-bit samples/s */
+		.block_align		= 2,		/* # channels * bytes/sample */
+		.bit_depth			= 16		/* 16-bit signed int  */
+	}
+};
 
-struct wav_file *wav_new_file(const char *path);
-struct wav_file *wav_open_file(const char *path);
-int wav_write_file(const struct wav_file *file);
-void wav_free_file(struct wav_file *file);
+#define WAV_DATA_CHUNK_ID { 'd', 'a', 't', 'a' }
+static const struct wav_data_chunk BARE_WAV_DATA_CHUNK = {
+	.chunk_id	= WAV_DATA_CHUNK_ID,			/* data chunk */
+	.chunk_size = sizeof(struct wav_data_chunk)	/* if empty, just id & size */
+};
 
-int wav_write_samples(FILE *file, void *samples, size_t size, size_t offset);
+/* simple wav file struct; header & contents */
+struct wav_file {
+	int fd;						/* file descriptor, < 0 if error condition */
+	const char *path;			/* path to file */
+	struct wav_header header;	/* file header */
+};
+
+/* some file property macros to enable laziness */
+#define WAV_HEADER_SIZE			(sizeof(struct wav_header))
+
+#define wav_is_valid_header(header)							\
+		(((int) (header)->base_chunk.chunk_id) ==			\
+					(int) ((char [4]) RIFF_CHUNK_ID)		\
+			&& ((int) (header)->base_chunk.riff_type) ==	\
+					(int) ((char [4]) RIFF_TYPE_WAVE)		\
+			&& ((int) (header)->format_chunk.chunk_id) ==	\
+					(int) ((char [4]) WAV_FORMAT_CHUNK_ID)	\
+			&& ((int) (header)->data_chunk.chunk_id) ==		\
+					(int) ((char [4]) WAV_DATA_CHUNK_ID))
+
+#define wav_file_header(file)		(&(file)->header)
+#define wav_file_data_chunk(file)	(&wav_file_header((file))->data_chunk)
+#define wav_file_base_chunk(file)	(&wav_file_header((file))->base_chunk)
+#define wav_file_format_chunk(file)	(&wav_file_header((file))->format_chunk)
+#define wav_file_format(file)		(&wav_file_format_chunk((file))->format)
+
+#define wav_file_set_format(file, fmt)	memcpy(wav_file_format((file)), fmt)
+
+#define wav_file_n_channels(file)	(wav_file_format((file))->n_channels)
+#define wav_file_sample_rate(file)	(wav_file_format((file))->sample_rate)
+#define wav_file_bit_depth(file)	(wav_file_format((file))->bit_depth)
+#define wav_file_sample_size(file)	(wav_file_bit_depth((file)) / 8)
+
+#define wav_file_size(file)	(wav_file_base_chunk((file))->chunk_size)
+#define wav_file_data_length(file) \
+		(wav_file_data_chunk((file))->chunk_size - \
+				sizeof(struct wav_data_chunk))
+
+#define wav_file_set_data_length(file, len) {								  \
+			wav_file_base_chunk((file))->chunk_size = WAV_HEADER_SIZE + len;  \
+			wav_file_data_chunk((file))->chunk_size =						  \
+					sizeof(struct wav_data_chunk) + len;					  \
+		}
+
+#define wav_file_n_samples(file)	\
+		(wav_file_data_length((file)) / wav_file_sample_size((file)))
+
+/*
+ * Open existing wav file
+ * @path			Path to target file
+ * @create_if_dne	Create file if it doesn't exist
+ *
+ * Returns new wav_file object on success, NULL on failure (errno set)
+ */
+struct wav_file *wav_file_open(const char *path, int create_if_dne);
+
+/*
+ * Close wav file & free wav file object
+ * @file	Target wav file
+ *
+ * Returns 0 on success, -1 on failure (errno set)
+ */
+int wav_file_close(struct wav_file *file);
+
+/*
+ * Read in samples from a wav file
+ * @file		Target wav file object
+ * @samples		Buffer to write samples to
+ * @count		Number of samples to read
+ * @offset		Offset from start of sample data to begin
+ *
+ * Returns # of samples read in, -1 on failure (errno set)
+ */
+int wav_file_read_samples(const struct wav_file *file,
+		void *samples, int count, unsigned int offset);
+
+/*
+ * Write samples to the wav file. Also adjusts header to reflect changes.
+ * @file		Wav file to be written to
+ * @samples		Buffer containing samples to be written
+ * @count		Number of samples to be written
+ * @offset		Offset from start of sample data to begin
+ *
+ * Returns 0 on success, negative errno on error
+ */
+int wav_file_write_samples(struct wav_file *file,
+		void *samples, unsigned int count, unsigned int offset);
 
 #endif /* __WAVR_WAV_H__ */
 

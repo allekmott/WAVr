@@ -60,20 +60,21 @@ enum waveform str_to_waveform(const char *s_waveform) {
 	}
 }
 
-#define BUFFER_SIZE 4096 << 4
+#define BUFFER_SIZE 4096
 
 /* Generate signal & write to specified file */
-int generate_signal(enum waveform waveform, struct signal_desc *sig) {
+int generate_signal(enum waveform waveform, struct signal_desc *sig,
+			void *output_dest, generator_cb_t writeout) {
 	signal_generator_t generator;
 	sample_renderer_t renderer;
 
-	unsigned long n_total_samples;
+	unsigned int n_total_samples;
 
 	double raw_samples[BUFFER_SIZE];
 	void *rendered_samples;
 
 	size_t sample_size, rendered_buffer_size;
-	unsigned long i;
+	unsigned int i, remaining;
 
 	generator = waveform_generator(waveform);
 
@@ -92,18 +93,40 @@ int generate_signal(enum waveform waveform, struct signal_desc *sig) {
 	rendered_samples = calloc(BUFFER_SIZE, sample_size);
 	n_total_samples = (sig->format.sample_rate) * (sig->duration) * 1e-6;
 
-	for (i = 0; i < n_total_samples; i += BUFFER_SIZE) {
+	for (i = 0; (i + BUFFER_SIZE) < n_total_samples; i += BUFFER_SIZE) {
+		/* printf("%i\n", i); */
+
 		/* generate samples */
 		generator(sig, raw_samples, BUFFER_SIZE);
 
 		/* convert samples to specified format */
 		renderer(raw_samples, rendered_samples, BUFFER_SIZE);
 
+		if (writeout(output_dest, rendered_samples, BUFFER_SIZE) < 0) {
+			lame_error("unable to write samples");
+			return -1;
+		}
+
 		/* flush buffers */
 		coolzero(raw_samples, sizeof(double) * BUFFER_SIZE);
 		coolzero(rendered_samples, rendered_buffer_size);
 	}
 
+	/* pick up any stragglers */
+	if (i < n_total_samples) {
+		remaining = n_total_samples - i;
+		/* printf("+%i\n", remaining); */
+
+		generator(sig, raw_samples, remaining);
+		renderer(raw_samples, rendered_samples, remaining);
+
+		if (writeout(output_dest, rendered_samples, remaining) < 0) {
+			lame_error("unable to write samples");
+			return -1;
+		}
+	}
+
+	free(rendered_samples);
 	return 0;
 };
 

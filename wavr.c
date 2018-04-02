@@ -17,6 +17,9 @@
 
 #include "wavr.h"
 
+static int wav_file_append_samples(void *file,
+		void *sammples, unsigned int count);
+
 int main(int argc, char *argv[]) {
 	struct wav_file *file;
 	struct signal_desc sig;
@@ -111,9 +114,28 @@ int main(int argc, char *argv[]) {
 
 	printf("\nGenerating samples...\n");
 
-	generate_signal(waveform, &sig);
+	if ((file = wav_file_open(output_path, 1)) <= 0) {
+		lame_error("unable to open output file");
+		return errno;
+	}
+
+	generate_signal(waveform, &sig, file, wav_file_append_samples);
+	wav_file_close(file);
 
 	printf("Finished sample generation.\n");
 
 	return 0;
+}
+
+static int wav_file_append_samples(void *file,
+		void *samples, unsigned int count) {
+	struct wav_file *wav_file;
+
+	if (file == NULL)
+		return -1;
+
+	wav_file = (struct wav_file *) file;
+
+	return wav_file_write_samples(wav_file,
+			samples, count, wav_file_n_samples(wav_file));
 }
