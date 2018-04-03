@@ -45,11 +45,15 @@ enum sample_rate str_to_sample_rate(const char *s_sample_rate);
 /* parse sample bit depth from string */
 enum sample_bit_depth str_to_bit_depth(const char *s_sample_bit_depth);
 
+/* dump samples to stdout */
+void dump_samples(void *samples, unsigned int count,
+		enum sample_bit_depth bit_depth);
+
 /* calculate signal size in bytes */
 #define signal_size_bytes(sigp) \
 		((unsigned long) (((sigp)->duration)	*	\
 			((sigp)->format.sample_rate)		* 	\
-			((sigp)->format.bit_depth)			*	\
+			((sigp)->format.bit_depth / 8)		*	\
 			1.0e-6))
 
 #endif /* __WAVR_SIGNAL_H__ */

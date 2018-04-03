@@ -30,7 +30,7 @@ struct wav_file *wav_file_open(const char *path, int create_if_dne) {
 	int fd;
 	int flags;
 
-	flags = O_RDWR | O_APPEND;
+	flags = O_RDWR; /* | O_APPEND; */
 	if (create_if_dne)
 		flags |= O_CREAT;
 
@@ -41,7 +41,10 @@ struct wav_file *wav_file_open(const char *path, int create_if_dne) {
 		return NULL;
 
 	file->fd = fd;
-	wav_file_init_header(file);
+	if (wav_file_init_header(file) < 0) {
+		close(file->fd);
+		return NULL;
+	}
 
 	return file;
 }
@@ -97,16 +100,11 @@ static int wav_file_read_header(struct wav_file *file) {
  */
 static int wav_file_write_header(struct wav_file *file) {
 	int n_total_written, n_written;
-	off_t last_seek_pos;
 
 	if (file == NULL) {
 		errno = EBADF;
 		return -1;
 	}
-
-	/* record current seek position */
-	if ((last_seek_pos = lseek(file->fd, 0, SEEK_CUR)) < 0)
-		return -1;
 
 	/* move to beginning of file */
 	if (lseek(file->fd, 0, SEEK_SET) < 0)
@@ -124,10 +122,6 @@ static int wav_file_write_header(struct wav_file *file) {
 
 		n_total_written += n_written;
 	}
-
-	/* revert to initial seek position */
-	if (lseek(file->fd, last_seek_pos, SEEK_SET) < 0)
-		return -1;
 
 	return 0;
 }
@@ -175,14 +169,13 @@ int wav_file_close(struct wav_file *file) {
 }
 
 int wav_file_write_samples(struct wav_file *file,
-		void *data, unsigned int count, unsigned int offset) {
+		void *data, unsigned int count, unsigned int sample_offset) {
 	struct wav_header *header;
 
-	off_t last_seek_pos, start_seek_pos;
-	unsigned int offset_in_bytes;
-	int n_to_write, n_total_written, n_written;
+	off_t start_offset, data_offset;
+	unsigned int n_to_write, n_total_written;
 
-	int err;
+	int n_written, err;
 
 	if (file == NULL) {
 		errno = EBADF;
@@ -191,31 +184,26 @@ int wav_file_write_samples(struct wav_file *file,
 		return 0;
 	}
 
-	/* record last seek pos */
-	if ((last_seek_pos = lseek(file->fd, 0, SEEK_CUR)) < 0)
-		return -1;
-
 	header = &file->header;
-	if (offset > wav_file_n_samples(file)) {
+	if (sample_offset > wav_file_n_samples(file)) {
 		/* offset lies beyond current data */
 		errno = EFAULT;
 		return -1;
 	}
 
-	offset_in_bytes		= offset * wav_file_sample_size(file);
-	n_to_write			= count * wav_file_sample_size(file);
-
-	start_seek_pos		= WAV_HEADER_SIZE + offset_in_bytes;
+	data_offset		= sample_offset * wav_file_sample_size(file);
+	start_offset	= WAV_HEADER_SIZE + data_offset;
+	n_to_write		= count * wav_file_sample_size(file);
 
 	/* move seek position to write offset () */
-	if (lseek(file->fd, start_seek_pos, SEEK_SET) < 0)
+	if (lseek(file->fd, start_offset, SEEK_SET) < 0)
 		return -1;
 
 	n_total_written = 0;
 	while (n_total_written < n_to_write) {
 		n_written = write(file->fd,
-				(((char *) data) + start_seek_pos + n_total_written),
-				n_to_write);
+				(data + n_total_written),
+				(n_to_write - n_total_written));
 
 		if (n_written < 0) {
 			err = errno;
@@ -228,7 +216,7 @@ int wav_file_write_samples(struct wav_file *file,
 	err = 0;
 
 done:
-	wav_file_set_data_length(file, (offset_in_bytes + n_total_written));
+	wav_file_set_data_size(file, (data_offset + n_total_written));
 
 	if (err) {
 		wav_file_write_header(file);

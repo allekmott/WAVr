@@ -15,19 +15,26 @@
 #include "signal.h"
 #include "generator.h"
 
-static int
-generate_sine(struct signal_desc *sig, double *samples, int count);
+static int generate_sine(struct signal_desc *sig,
+		double *samples, unsigned int count);
 
-static int
-generate_square(struct signal_desc *sig, double *samples, int count);
+static int generate_square(struct signal_desc *sig,
+		double *samples, unsigned int count);
 
-static int
-generate_triangle(struct signal_desc *sig, double *samples, int count);
+static int generate_triangle(struct signal_desc *sig,
+		double *samples, unsigned int count);
 
-static int render_samples_8bit(double *raw, void *rendered, int count);
-static int render_samples_16bit(double *raw, void *rendered, int count);
-static int render_samples_24bit(double *raw, void *rendered, int count);
-static int render_samples_32bit(double *raw, void *rendered, int count);
+static int render_samples_8bit(double *raw, void *rendered,
+		unsigned int count);
+
+static int render_samples_16bit(double *raw, void *rendered,
+		unsigned int count);
+
+static int render_samples_24bit(double *raw, void *rendered,
+		unsigned int count);
+
+static int render_samples_32bit(double *raw, void *rendered,
+		unsigned int count);
 
 /* mapping from waveform -> generator function */
 static const signal_generator_t generators[] = {
@@ -103,7 +110,6 @@ int generate_signal(enum waveform waveform, struct signal_desc *sig,
 		renderer(raw_samples, rendered_samples, BUFFER_SIZE);
 
 		if (writeout(output_dest, rendered_samples, BUFFER_SIZE) < 0) {
-			lame_error("unable to write samples");
 			return -1;
 		}
 
@@ -121,7 +127,6 @@ int generate_signal(enum waveform waveform, struct signal_desc *sig,
 		renderer(raw_samples, rendered_samples, remaining);
 
 		if (writeout(output_dest, rendered_samples, remaining) < 0) {
-			lame_error("unable to write samples");
 			return -1;
 		}
 	}
@@ -132,7 +137,7 @@ int generate_signal(enum waveform waveform, struct signal_desc *sig,
 
 /* Generate trigonometric sine wave */
 static int
-generate_sine(struct signal_desc *sig, double *samples, int count) {
+generate_sine(struct signal_desc *sig, double *samples, unsigned int count) {
 	double multiplier;
 	int i;
 
@@ -145,20 +150,21 @@ generate_sine(struct signal_desc *sig, double *samples, int count) {
 }
 
 /* Generate square wave */
-static int
-generate_square(struct signal_desc *sig, double *samples, int count) {
+static int generate_square(struct signal_desc *sig,
+		double *samples, unsigned int count) {
 	return 0;
 }
 
 /* Generate trianglw wave */
-static int
-generate_triangle(struct signal_desc *sig, double *samples, int count) {
+static int generate_triangle(struct signal_desc *sig,
+		double *samples, unsigned int count) {
 	return 0;
 }
 
-static int render_samples_8bit(double *raw, void *rendered, int count) {
+static int render_samples_8bit(double *raw, void *rendered,
+		unsigned int count) {
 	unsigned char *out_samples;
-	int i;
+	unsigned int i;
 
 	out_samples = (unsigned char *) rendered;
 	for (i = 0; i < count; i++)
@@ -167,21 +173,23 @@ static int render_samples_8bit(double *raw, void *rendered, int count) {
 	return 0;
 }
 
-static int render_samples_16bit(double *raw, void *rendered, int count) {
+static int render_samples_16bit(double *raw, void *rendered,
+		unsigned int count) {
 	short *out_samples;
-	int i;
+	unsigned int i;
 
 	/* 16bit -> short */
 	out_samples = (short *) rendered;
 	for (i = 0; i < count; i++)
-		*(out_samples + i) = (short) (*(raw + i) * (double) SHRT_MAX);
+		*(out_samples + i) = (short) ((*(raw + i)) * (double) SHRT_MAX);
 
 	return 0;
 }
 
-static int render_samples_24bit(double *raw, void *rendered, int count) {
+static int render_samples_24bit(double *raw, void *rendered,
+		unsigned int count) {
 	char *out_samples;
-	int i, i_val;
+	unsigned int i, i_val;
 
 	out_samples = (char *) rendered;
 	for (i = 0; i < count; i++) {
@@ -195,9 +203,10 @@ static int render_samples_24bit(double *raw, void *rendered, int count) {
 	return 0;
 }
 
-static int render_samples_32bit(double *raw, void *rendered, int count) {
+static int render_samples_32bit(double *raw, void *rendered,
+		unsigned int count) {
 	float *out_samples;
-	int i;
+	unsigned int i;
 
 	out_samples = (float *) rendered;
 	for (i = 0; i < count; i++)

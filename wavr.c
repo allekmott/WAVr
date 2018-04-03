@@ -17,8 +17,11 @@
 
 #include "wavr.h"
 
-static int wav_file_append_samples(void *file,
-		void *sammples, unsigned int count);
+static int append_samples(void *file, void *sammples, unsigned int count);
+static int dump_and_append_samples(
+		void *file, void *samples, unsigned int count);
+
+static void set_audio_format(struct wav_file *file, struct signal_desc *sig);
 
 int main(int argc, char *argv[]) {
 	struct wav_file *file;
@@ -29,6 +32,7 @@ int main(int argc, char *argv[]) {
 	extern int optind, optopt;
 
 	char dump_samples;
+	generator_cb_t sample_handler;
 
 	char *output_path;
 
@@ -36,6 +40,8 @@ int main(int argc, char *argv[]) {
 
 	/* defaults */
 	output_path		= "wavr_out.wav";
+	dump_samples	= 0;
+
 	waveform		= WAVEFORM_SINE;	/* sine wave */
 
 	sig.frequency 	= 1e6;		/* 1 kHz */
@@ -49,7 +55,7 @@ int main(int argc, char *argv[]) {
 	while ((flag = getopt(argc, argv, "o:pd:f:ls:b:i:cj:w:h")) != -1) {
 		switch (flag) {
 			case 'o': output_path = optarg; break;
-			case 'p': /* TODO: dump samples */ break;
+			case 'p': dump_samples = 1; break;
 			case 'd':
 				if (!(sig.duration = str_to_time_us(optarg))) {
 					lame("Invalid duration value: %s\n", optarg);
@@ -103,7 +109,7 @@ int main(int argc, char *argv[]) {
 			"Frequency:   %.2f Hz\n"
 			"Sample rate: %.01f kHz\n"
 			"Bit depth:   %i bit\n"
-			"Approx size: %lu b\n",
+			"Signal size: %lu bytes\n",
 			output_path,
 			waveform_name(waveform),
 			time_us_to_s(sig.duration),
@@ -119,16 +125,27 @@ int main(int argc, char *argv[]) {
 		return errno;
 	}
 
-	generate_signal(waveform, &sig, file, wav_file_append_samples);
+	set_audio_format(file, &sig);
+
+	sample_handler = (dump_samples) ? dump_and_append_samples : append_samples;
+
+	/* FIXME: if signal size < existing data size, truncate file */
+	if (generate_signal(waveform, &sig, file, sample_handler) < 0) {
+		lame_error("Signal generation failed");
+		wav_file_close(file);
+
+		return -1;
+	}
+
 	wav_file_close(file);
 
-	printf("Finished sample generation.\n");
+	printf("\nfin.\n");
 
 	return 0;
 }
 
-static int wav_file_append_samples(void *file,
-		void *samples, unsigned int count) {
+/* Append samples to a target wav_file. Used as signal generator callback */
+static int append_samples(void *file, void *samples, unsigned int count) {
 	struct wav_file *wav_file;
 
 	if (file == NULL)
@@ -138,4 +155,32 @@ static int wav_file_append_samples(void *file,
 
 	return wav_file_write_samples(wav_file,
 			samples, count, wav_file_n_samples(wav_file));
+}
+
+/* dump samples to terminal in hex format and write to wav_file */
+static int dump_and_append_samples(void *file,
+		void *samples, unsigned int count) {
+	struct wav_file *wav_file;
+
+	wav_file = (struct wav_file *) file;
+	dump_samples(samples, count, wav_file_bit_depth(wav_file));
+
+	return append_samples(file, samples, count);
+}
+
+/* Merge signal_desc properties into corresponding wav_audio_format fields
+ * in wav_file */
+static void set_audio_format(struct wav_file *file, struct signal_desc *sig) {
+	struct wav_audio_format *fmt;
+
+	if (file == NULL)
+		return;
+
+	fmt = wav_file_format(file);
+	fmt->sample_rate = sig->format.sample_rate;
+	fmt->bit_depth = sig->format.bit_depth;
+
+	/* derived from parameters above */
+	fmt->byte_rate = fmt->n_channels * fmt->sample_rate * (fmt->bit_depth / 8);
+	fmt->block_align = fmt->n_channels * (fmt->bit_depth / 8);
 }

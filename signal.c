@@ -49,3 +49,28 @@ enum sample_bit_depth str_to_bit_depth(const char *s_sample_bit_depth) {
 		default:					return SAMPLE_BIT_DEPTH_INVAL;
 	}
 }
+
+void dump_samples(void *samples, unsigned int count,
+		enum sample_bit_depth bit_depth) {
+	unsigned int i, b, per_line;
+	int sample_size, n_chars, overflow;
+
+	if (samples == NULL)
+		return;
+
+	sample_size = bit_depth / 8;
+	n_chars = sample_size * 2;
+
+	per_line = (80 / (n_chars + 1));
+
+	for (i = 0; i < count; i++) {
+		if (i % per_line == 0)
+			printf("\n");
+		else
+			printf(" ");
+
+		for (b = 0; b < sample_size; b++)
+			printf("%02x",
+					*((unsigned char *) (samples + (i * sample_size) + b)));
+	}
+}

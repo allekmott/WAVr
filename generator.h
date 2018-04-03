@@ -28,11 +28,12 @@ enum waveform str_to_waveform(const char *s_waveform);
 
 /* Generic signal generator; Takes in description of signal, pointer to sample
  * buffer, and # of samples to be generated */
-typedef int (*signal_generator_t) (struct signal_desc *, double *, int);
+typedef int (*signal_generator_t)
+		(struct signal_desc *, double *, unsigned int);
 
 /* Generic sample renderer; Takes in pointers to pre-rendered &
  * post-rendered sample buffers & number of samples to render */
-typedef int (*sample_renderer_t) (double *, void *, int);
+typedef int (*sample_renderer_t) (double *, void *, unsigned int);
 
 /* Callback function for use in generator. Generally used for writing buffer
  * to file.
