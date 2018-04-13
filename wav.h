@@ -32,7 +32,7 @@ struct wav_audio_format {
 /* WAV-specific parameters describing the data */
 struct wav_format_chunk {
 	char chunk_id[4];					/* [big] chunk identifier ('fmt ') */
-	unsigned int chunk_size;			/* [lit] size of this chunk */
+	unsigned int chunk_size;			/* [lit] size of subchunk (format) */
 	struct wav_audio_format format;		/* audio format */
 };
 
@@ -40,7 +40,7 @@ struct wav_format_chunk {
  * actual contents of the wav file */
 struct wav_data_chunk {
 	char chunk_id[4];			/* [big] chunk identifier ('data') */
-	unsigned int chunk_size;	/* [lit] size of DATA FOLLOWING this chunk */
+	unsigned int chunk_size;	/* [lit] size of subchunk (actual data) */
 };
 
 /* entire header */
@@ -62,8 +62,8 @@ static const struct riff_base_chunk BARE_RIFF_BASE_CHUNK = {
 static const struct wav_format_chunk BARE_WAV_FORMAT_CHUNK = {
 	.chunk_id	= WAV_FORMAT_CHUNK_ID,	/* format chunk */
 
-	/* size of this chunk is static, and its own size */
-	.chunk_size	= sizeof(struct wav_format_chunk),
+	/* subchunk size, so size of the audio format following */
+	.chunk_size	= sizeof(struct wav_audio_format),
 
 	/* defaults */
 	.format = {
@@ -116,7 +116,7 @@ struct wav_file {
 #define wav_file_sample_size(file)	(wav_file_bit_depth((file)) / 8)
 
 #define wav_file_size(file)	(wav_file_base_chunk((file))->chunk_size)
-#define wav_file_data_size(file) (wav_file_data_chunk((file))->chunk_size)
+#define wav_file_data_size(file)	(wav_file_data_chunk((file))->chunk_size)
 
 #define wav_file_set_data_size(file, size) {								  \
 			wav_file_base_chunk((file))->chunk_size = WAV_HEADER_SIZE + size; \
