@@ -60,5 +60,6 @@ void dump_samples(void *samples, unsigned int count,
 #define wave_sine(t)			sin((t) * (2.0 * M_PI))
 double wave_square(double t);
 double wave_triangle(double t);
+double wave_sawtooth(double t);
 
 #endif /* __WAVR_SIGNAL_H__ */

@@ -19,10 +19,14 @@ enum waveform {
 	WAVEFORM_SINE,							/* sine wave generator */
 	WAVEFORM_SQUARE,						/* square wave generator */
 	WAVEFORM_TRIANGLE,						/* triangle wave generator */
+	WAVEFORM_SAWTOOTH,
 	WAVEFORM_START_VAL	= WAVEFORM_SINE,
-	WAVEFORM_END_VAL	= WAVEFORM_TRIANGLE
+	WAVEFORM_END_VAL	= WAVEFORM_SAWTOOTH
 };
-static const char *WAVEFORM_NAMES[] = { "sine", "square", "triangle" };
+static const char *WAVEFORM_NAMES[] = {
+	"sine", "square", "triangle", "sawtooth"
+};
+
 #define waveform_name(waveform) WAVEFORM_NAMES[(waveform) - WAVEFORM_START_VAL]
 
 /*

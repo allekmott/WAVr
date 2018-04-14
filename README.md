@@ -19,6 +19,7 @@ Signal:
   - `sine`	(**1**) - a sine wave
   - `square`	(**2**) - a square wave
   - `triangle`	(**3**) - a triangle wave
+  - `sawtooth`	(**4**) - a sawtooth wave
 
 - `-f <frequency>`	set desired frequency	(Hz)
 - `-d <duration>`	set desired duration	(s)

@@ -58,7 +58,7 @@ enum sample_bit_depth str_to_bit_depth(const char *s_sample_bit_depth) {
 void dump_samples(void *samples, unsigned int count,
 		enum sample_bit_depth bit_depth) {
 	unsigned int i, b, per_line;
-	int sample_size, n_chars, overflow;
+	int sample_size, n_chars;
 
 	if (samples == NULL)
 		return;
@@ -105,4 +105,8 @@ double wave_triangle(double t) {
 	}
 
 	return 0.0;
+}
+
+double wave_sawtooth(double t) {
+	return fmod(t, 2.0) - 1.0;
 }

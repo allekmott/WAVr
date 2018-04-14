@@ -15,6 +15,7 @@
 #include "signal.h"
 #include "generator.h"
 
+/* generators */
 static int generate_sine(struct signal_desc *sig,
 		double *samples, unsigned int count, unsigned int offset);
 
@@ -24,6 +25,10 @@ static int generate_square(struct signal_desc *sig,
 static int generate_triangle(struct signal_desc *sig,
 		double *samples, unsigned int count, unsigned int offset);
 
+static int generate_sawtooth(struct signal_desc *sig,
+		double *samples, unsigned int count, unsigned int offset);
+
+/* renderers */
 static int render_samples_8bit(double *raw, void *rendered,
 		unsigned int count);
 
@@ -38,9 +43,10 @@ static int render_samples_32bit(double *raw, void *rendered,
 
 /* mapping from waveform -> generator function */
 static const signal_generator_t generators[] = {
-	generate_sine,		/* WAVR_WAVEFORM_SINE */
-	generate_square,	/* WAVR_WAVEFORM_SQUARE */
-	generate_triangle	/* WAVR_WAVEFORM_TRIANGLE */
+	generate_sine,		/* WAVEFORM_SINE */
+	generate_square,	/* WAVEFORM_SQUARE */
+	generate_triangle,	/* WAVEFORM_TRIANGLE */
+	generate_sawtooth	/* WAVEFORM_SAWTOOTH */
 };
 #define waveform_generator(waveform) generators[(waveform) - 1]
 
@@ -176,6 +182,20 @@ static int generate_triangle(struct signal_desc *sig,
 
 	for (i = 0; i < count; i++)
 		*(samples + i) = wave_triangle(t_multiplier * (i + offset));
+
+	return 0;
+}
+
+/* generate sawtooth wave */
+static int generate_sawtooth(struct signal_desc *sig,
+		double *samples, unsigned int count, unsigned int offset) {
+	double t_multiplier;
+	unsigned int i;
+
+	t_multiplier = signal_t_multiplier(sig);
+
+	for (i = 0; i < count; i++)
+		*(samples + i) = wave_sawtooth(t_multiplier * (i + offset));
 
 	return 0;
 }
