@@ -32,10 +32,20 @@ struct wav_file *wav_file_open(const char *path, int create_if_dne) {
 
 	flags = O_RDWR; /* | O_APPEND; */
 	if (create_if_dne)
-		flags |= O_CREAT;
+		flags |= O_CREAT | O_EXCL;
 
-	if ((fd = open(path, flags, WAV_FILE_MODE)) < 0)
-		return NULL;
+	if ((fd = open(path, flags, WAV_FILE_MODE)) < 0) {
+		if (errno == EEXIST) {
+			/* file already exists. remove existing & create new one */
+			unlink(path);
+
+			/* retry open */
+			if ((fd = open(path, flags, WAV_FILE_MODE)) < 0)
+				return NULL;
+		} else {
+			return NULL;
+		}
+	}
 
 	if (!(file = calloc(1, sizeof(struct wav_file))))
 		return NULL;
