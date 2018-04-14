@@ -163,12 +163,12 @@ static int generate_triangle(struct signal_desc *sig,
 
 static int render_samples_8bit(double *raw, void *rendered,
 		unsigned int count) {
-	unsigned char *out_samples;
+	char *out_samples;
 	unsigned int i;
 
-	out_samples = (unsigned char *) rendered;
+	out_samples = (char *) rendered;
 	for (i = 0; i < count; i++)
-		*(out_samples + i) = (unsigned char) ((*raw + i) * (double) CHAR_MAX);
+		*(out_samples + i) = (char) ((*(raw + i) + 1.0) * (double) SCHAR_MAX);
 
 	return 0;
 }
@@ -189,15 +189,16 @@ static int render_samples_16bit(double *raw, void *rendered,
 static int render_samples_24bit(double *raw, void *rendered,
 		unsigned int count) {
 	char *out_samples;
-	unsigned int i, i_val;
+	unsigned int i;
+	int i_val;
 
 	out_samples = (char *) rendered;
 	for (i = 0; i < count; i++) {
 		/* since 24-bit isn't symmetric, this one's a bit weird */
-		i_val = (int)(*(raw + i) * (double) (INT_MAX >> 8));
+		i_val = (int) ((*(raw + i)) * (double) WAVR_INT24_MAX);
 
 		/* copy lower three bytes of in into buffer */
-		memcpy((rendered + (i * 3)), ((char *) &i_val) + 1, sizeof(char) * 3);
+		memcpy((rendered + (i * 3)), &i_val, sizeof(char) * 3);
 	}
 
 	return 0;
@@ -205,12 +206,12 @@ static int render_samples_24bit(double *raw, void *rendered,
 
 static int render_samples_32bit(double *raw, void *rendered,
 		unsigned int count) {
-	float *out_samples;
+	int *out_samples;
 	unsigned int i;
 
-	out_samples = (float *) rendered;
+	out_samples = (int *) rendered;
 	for (i = 0; i < count; i++)
-		*(out_samples + i) = (float) *(raw + i);
+		*(out_samples + i) = (int) ((*(raw + i)) * (double) INT_MAX);
 
 	return 0;
 }

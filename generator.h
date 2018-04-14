@@ -9,6 +9,8 @@
 #ifndef __WAVR_GENERATOR_H__
 #define __WAVR_GENERATOR_H__
 
+#include <limits.h>
+
 #include "signal.h"
 
 /* available waveform types */
@@ -22,6 +24,12 @@ enum waveform {
 };
 static const char *WAVEFORM_NAMES[] = { "sine", "square", "triangle" };
 #define waveform_name(waveform) WAVEFORM_NAMES[(waveform) - WAVEFORM_START_VAL]
+
+/*
+ * 24-bit int is awkward
+ * TODO: move this to signal.h
+ */
+#define WAVR_INT24_MAX	(0x007fffff)
 
 /* parse waveform enum value from string */
 enum waveform str_to_waveform(const char *s_waveform);
