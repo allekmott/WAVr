@@ -16,13 +16,13 @@
 #include "generator.h"
 
 static int generate_sine(struct signal_desc *sig,
-		double *samples, unsigned int count);
+		double *samples, unsigned int count, unsigned int offset);
 
 static int generate_square(struct signal_desc *sig,
-		double *samples, unsigned int count);
+		double *samples, unsigned int count, unsigned int offset);
 
 static int generate_triangle(struct signal_desc *sig,
-		double *samples, unsigned int count);
+		double *samples, unsigned int count, unsigned int offset);
 
 static int render_samples_8bit(double *raw, void *rendered,
 		unsigned int count);
@@ -104,7 +104,7 @@ int generate_signal(enum waveform waveform, struct signal_desc *sig,
 		/* printf("%i\n", i); */
 
 		/* generate samples */
-		generator(sig, raw_samples, BUFFER_SIZE);
+		generator(sig, raw_samples, BUFFER_SIZE, i);
 
 		/* convert samples to specified format */
 		renderer(raw_samples, rendered_samples, BUFFER_SIZE);
@@ -123,7 +123,7 @@ int generate_signal(enum waveform waveform, struct signal_desc *sig,
 		remaining = n_total_samples - i;
 		/* printf("+%i\n", remaining); */
 
-		generator(sig, raw_samples, remaining);
+		generator(sig, raw_samples, remaining, i);
 		renderer(raw_samples, rendered_samples, remaining);
 
 		if (writeout(output_dest, rendered_samples, remaining) < 0) {
@@ -136,28 +136,28 @@ int generate_signal(enum waveform waveform, struct signal_desc *sig,
 };
 
 /* Generate trigonometric sine wave */
-static int
-generate_sine(struct signal_desc *sig, double *samples, unsigned int count) {
+static int generate_sine(struct signal_desc *sig,
+		double *samples, unsigned int count, unsigned int offset) {
 	double multiplier;
-	int i;
+	unsigned int i;
 
 	multiplier = freq_mhz_to_hz(sig->frequency) / sig->format.sample_rate;
 
 	for (i = 0; i < count; i++)
-		*(samples + i) = sin((multiplier * i) + M_PI);
+		*(samples + i) = sin((multiplier * (i + offset)) + M_PI);
 
 	return 0;
 }
 
 /* Generate square wave */
 static int generate_square(struct signal_desc *sig,
-		double *samples, unsigned int count) {
+		double *samples, unsigned int count, unsigned int offset) {
 	return 0;
 }
 
 /* Generate trianglw wave */
 static int generate_triangle(struct signal_desc *sig,
-		double *samples, unsigned int count) {
+		double *samples, unsigned int count, unsigned int offset) {
 	return 0;
 }
 

@@ -27,9 +27,9 @@ static const char *WAVEFORM_NAMES[] = { "sine", "square", "triangle" };
 enum waveform str_to_waveform(const char *s_waveform);
 
 /* Generic signal generator; Takes in description of signal, pointer to sample
- * buffer, and # of samples to be generated */
+ * buffer, and # of samples to be generated, and the offset in samples */
 typedef int (*signal_generator_t)
-		(struct signal_desc *, double *, unsigned int);
+		(struct signal_desc *, double *, unsigned int, unsigned int);
 
 /* Generic sample renderer; Takes in pointers to pre-rendered &
  * post-rendered sample buffers & number of samples to render */
