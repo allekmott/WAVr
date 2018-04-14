@@ -56,4 +56,9 @@ void dump_samples(void *samples, unsigned int count,
 			((sigp)->format.bit_depth / 8)		*	\
 			1.0e-6))
 
+/* some wave functions */
+#define wave_sine(t)			sin((t) * (2.0 * M_PI))
+double wave_square(double t);
+double wave_triangle(double t);
+
 #endif /* __WAVR_SIGNAL_H__ */

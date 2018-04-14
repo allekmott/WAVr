@@ -135,16 +135,19 @@ int generate_signal(enum waveform waveform, struct signal_desc *sig,
 	return 0;
 };
 
+#define signal_t_multiplier(t)	\
+		(freq_mhz_to_hz((sig)->frequency) / (sig)->format.sample_rate)
+
 /* Generate trigonometric sine wave */
 static int generate_sine(struct signal_desc *sig,
 		double *samples, unsigned int count, unsigned int offset) {
-	double multiplier;
+	double t_multiplier;
 	unsigned int i;
 
-	multiplier = freq_mhz_to_hz(sig->frequency) / sig->format.sample_rate;
+	t_multiplier = signal_t_multiplier(sig);
 
 	for (i = 0; i < count; i++)
-		*(samples + i) = sin((multiplier * (i + offset)) + M_PI);
+		*(samples + i) = wave_sine(t_multiplier * (i + offset));
 
 	return 0;
 }
@@ -152,12 +155,28 @@ static int generate_sine(struct signal_desc *sig,
 /* Generate square wave */
 static int generate_square(struct signal_desc *sig,
 		double *samples, unsigned int count, unsigned int offset) {
+	double t_multiplier;
+	unsigned int i;
+
+	t_multiplier = signal_t_multiplier(sig);
+
+	for (i = 0; i < count; i++)
+		*(samples + i) = wave_square(t_multiplier * (i + offset));
+
 	return 0;
 }
 
 /* Generate trianglw wave */
 static int generate_triangle(struct signal_desc *sig,
 		double *samples, unsigned int count, unsigned int offset) {
+	double t_multiplier;
+	unsigned int i;
+
+	t_multiplier = signal_t_multiplier(sig);
+
+	for (i = 0; i < count; i++)
+		*(samples + i) = wave_triangle(t_multiplier * (i + offset));
+
 	return 0;
 }
 

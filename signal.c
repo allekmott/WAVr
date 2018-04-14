@@ -7,6 +7,11 @@
 
 #include <stdio.h>
 
+#include <math.h>
+#ifdef __linux__
+#include <tgmath.h>
+#endif /* __linux__ */
+
 #include "signal.h"
 
 enum sample_rate str_to_sample_rate(const char *s_sample_rate) {
@@ -73,4 +78,31 @@ void dump_samples(void *samples, unsigned int count,
 			printf("%02x",
 					*((unsigned char *) (samples + (i * sample_size) + b)));
 	}
+}
+
+double wave_square(double t) {
+	return ((int) t % 2 == 0) ? 1.0 : -1.0;
+}
+
+double wave_triangle(double t) {
+	double t_mod1;
+
+	t_mod1 = fmod(t, 1.0);
+
+	switch (((int) t) % 4) {
+		case 0:
+			/* first quarter, on the up from 0 */
+			return t_mod1;
+		case 1:
+			/* second quarter, on the down from 1 */
+			return 1.0 - t_mod1;
+		case 2:
+			/* third quarter, on the down from 0 */
+			return (-t_mod1);
+		case 3:
+			/* fourth quarter, on the up from -1 */
+			return -1.0 + t_mod1;
+	}
+
+	return 0.0;
 }
