@@ -1,35 +1,32 @@
 WAVr
 --------------------------
 
-Wave-er; A simple, but powerful command line tool to be used in reading,
-writing, generating, manipulating, and otherwise hacky processing of
-WAV audio files. 
+Command line tool for creation (signal generation) & manipulation of WAV files.
 
-Signal Generator
---------------------------
+As of right now, only signal generation & WAV outputting are implemented.
 
-(As of now) The default action of WAVr is to generate a 1-second sine wave 
-with a frequency of 1000 Hz. Eventually, other waveforms will be available in
-the mix, as well as not just signal generation, but DSP also.
+Usage: `./wavr [options]`
 
-Typical Usecases
---------------------------
+### Options
 
-**Signal Generation**
-Generate a 4.5 second sine wave with frequency 440 Hz and sample rate 96 kHz,
-using 2 threads:
+Input/Output:
+- `-o <file>`		set output file path
 
-	./wavr -t 4.5 -f 440 -s 96000 -t 2
+Signal:
+- `-w <waveform>`	select desired waveform
+  
+  Avaliable waveforms include:
+  - `sine`	(**1**) - a sine wave
+  - `square`	(**2**) - a square wave
+  - `triangle`	(**3**) - a triangle wave
 
-**Reading WAV files**
-Read file "signal.wav" and dump all samples to the standard output:
+- `-f <frequency>`	set desired frequency	(Hz)
+- `-d <duration>`	set desired duration	(s)
 
-	./wavr -i signal.wav -d
+Sampling:
+- `-s <sample_rate>`	set desired sample rate	(kHz OR Hz)
+- `-b <bit_depth>`	set desired bit depth	(bits; 8/16/24/32)
 
-Parse samples from standard input and output to "signal.wav":
-	
-	./wavr -c -o signal.wav
+Processing (**NOT IMPLEMENTED**):
+- `-t <thread_count>`	specify number of threads to use
 
-Hacky WAV duplication:
-	
-	./wavr -i signal.wav -d | ./wavr -c -o signal_1.wav
