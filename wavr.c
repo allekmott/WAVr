@@ -13,6 +13,7 @@
 
 #include "util.h"
 #include "wav.h"
+#include "waveform.h"
 #include "signal.h"
 #include "generator.h"
 

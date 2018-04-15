@@ -6,6 +6,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <limits.h>
 
 #include <math.h>
 #ifdef __linux__
@@ -80,33 +82,57 @@ void dump_samples(void *samples, unsigned int count,
 	}
 }
 
-double wave_square(double t) {
-	return ((int) t % 2 == 0) ? 1.0 : -1.0;
+int render_samples_8bit(double *raw, void *rendered,
+		unsigned int count) {
+	char *out_samples;
+	unsigned int i;
+
+	out_samples = (char *) rendered;
+	for (i = 0; i < count; i++)
+		*(out_samples + i) = (char) ((*(raw + i) + 1.0) * (double) SCHAR_MAX);
+
+	return 0;
 }
 
-double wave_triangle(double t) {
-	double t_mod1;
+int render_samples_16bit(double *raw, void *rendered,
+		unsigned int count) {
+	short *out_samples;
+	unsigned int i;
 
-	t_mod1 = fmod(t, 1.0);
+	/* 16bit -> short */
+	out_samples = (short *) rendered;
+	for (i = 0; i < count; i++)
+		*(out_samples + i) = (short) ((*(raw + i)) * (double) SHRT_MAX);
 
-	switch (((int) t) % 4) {
-		case 0:
-			/* first quarter, on the up from 0 */
-			return t_mod1;
-		case 1:
-			/* second quarter, on the down from 1 */
-			return 1.0 - t_mod1;
-		case 2:
-			/* third quarter, on the down from 0 */
-			return (-t_mod1);
-		case 3:
-			/* fourth quarter, on the up from -1 */
-			return -1.0 + t_mod1;
+	return 0;
+}
+
+int render_samples_24bit(double *raw, void *rendered,
+		unsigned int count) {
+	char *out_samples;
+	unsigned int i;
+	int i_val;
+
+	out_samples = (char *) rendered;
+	for (i = 0; i < count; i++) {
+		/* since 24-bit isn't symmetric, this one's a bit weird */
+		i_val = (int) ((*(raw + i)) * (double) WAVR_INT24_MAX);
+
+		/* copy lower three bytes of in into buffer */
+		memcpy((rendered + (i * 3)), &i_val, sizeof(char) * 3);
 	}
 
-	return 0.0;
+	return 0;
 }
 
-double wave_sawtooth(double t) {
-	return fmod(t, 2.0) - 1.0;
+int render_samples_32bit(double *raw, void *rendered,
+		unsigned int count) {
+	int *out_samples;
+	unsigned int i;
+
+	out_samples = (int *) rendered;
+	for (i = 0; i < count; i++)
+		*(out_samples + i) = (int) ((*(raw + i)) * (double) INT_MAX);
+
+	return 0;
 }

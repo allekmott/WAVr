@@ -8,12 +8,16 @@
 #ifndef __WAVR_SIGNAL_H__
 #define __WAVR_SIGNAL_H__
 
+/* 24-bit int is awkward, so we'll need this */
+#define WAVR_INT24_MAX	(0x007fffff)
+
 enum sample_bit_depth {
-	SAMPLE_BIT_DEPTH_INVAL	= 0,
-	SAMPLE_BIT_DEPTH_8		= 8,
-	SAMPLE_BIT_DEPTH_16		= 16,
-	SAMPLE_BIT_DEPTH_24		= 24,
-	SAMPLE_BIT_DEPTH_32		= 32
+	SAMPLE_BIT_DEPTH_INVAL		= 0,
+	SAMPLE_BIT_DEPTH_8			= 8,
+	SAMPLE_BIT_DEPTH_16			= 16,
+	SAMPLE_BIT_DEPTH_24			= 24,
+	SAMPLE_BIT_DEPTH_32			= 32,
+	SAMPLE_BIT_DEPTH_START_VAL	= SAMPLE_BIT_DEPTH_8
 };
 
 enum sample_rate {
@@ -39,6 +43,27 @@ struct signal_desc {
 	struct sample_format	format;		/* sample format parameters */
 };
 
+#define signal_bytes_per_sample(sigp)	((sigp)->format.bit_depth / 8)
+
+/* sample renderer; takes in high resolution samples (doubles) and converts
+ * them to lower resolution */
+typedef int (*sample_renderer_t) (double *, void *, unsigned int);
+
+/* renderers */
+int render_samples_8bit(double *raw, void *rendered, unsigned int count);
+int render_samples_16bit(double *raw, void *rendered, unsigned int count);
+int render_samples_24bit(double *raw, void *rendered, unsigned int count);
+int render_samples_32bit(double *raw, void *rendered, unsigned int count);
+
+const static sample_renderer_t SAMPLE_RENDERERS[] = {
+	render_samples_8bit,
+	render_samples_16bit,
+	render_samples_24bit,
+	render_samples_32bit
+};
+#define signal_renderer(sigp)	\
+		(SAMPLE_RENDERERS[signal_bytes_per_sample((sigp)) - 1])
+
 /* parse sample rate from string */
 enum sample_rate str_to_sample_rate(const char *s_sample_rate);
 
@@ -53,13 +78,7 @@ void dump_samples(void *samples, unsigned int count,
 #define signal_size_bytes(sigp) \
 		((unsigned long) (((sigp)->duration)	*	\
 			((sigp)->format.sample_rate)		* 	\
-			((sigp)->format.bit_depth / 8)		*	\
+			signal_bytes_per_sample((sigp))		*	\
 			1.0e-6))
-
-/* some wave functions */
-#define wave_sine(t)			sin((t) *  M_PI)
-double wave_square(double t);
-double wave_triangle(double t);
-double wave_sawtooth(double t);
 
 #endif /* __WAVR_SIGNAL_H__ */
