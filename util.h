@@ -11,8 +11,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+
 #include <math.h>
+#include <time.h>
+#include <errno.h>
 
 /* wrap memset in bzero interface */
 #define coolzero(buf, size) memset((buf), 0, (size))
@@ -34,6 +36,9 @@ unsigned long str_to_time_us(const char *s_time);
 
 /* unsigned int mhz to float hz */
 #define freq_mhz_to_hz(n_freq_mhz) (((float) (n_freq_mhz)) * 1.0e-3)
+
+/* convert clock count to seconds elapsed */
+#define time_clocks_to_s(n_clocks) (((double) (n_clocks)) / CLOCKS_PER_SEC)
 
 /* parse string into integer frequency value (milihertz)
  * returns 0 on failure */

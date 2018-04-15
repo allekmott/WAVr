@@ -5,10 +5,11 @@
  * @brief	Entry point for WAVr. Handles command line args & WAVz
  */
 
-#include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <limits.h>
+#include <time.h>
+#include <errno.h>
 
 #include "util.h"
 #include "wav.h"
@@ -35,6 +36,9 @@ int main(int argc, char *argv[]) {
 	generator_cb_t sample_handler;
 
 	char *output_path;
+
+	int res;
+	clock_t t_start, t_end;
 
 	coolzero(&sig, sizeof(struct signal_desc));
 
@@ -130,7 +134,11 @@ int main(int argc, char *argv[]) {
 	sample_handler = (dump_samples) ? dump_and_append_samples : append_samples;
 
 	/* FIXME: if signal size < existing data size, truncate file */
-	if (generate_signal(waveform, &sig, file, sample_handler) < 0) {
+	t_start = clock();
+	res = generate_signal(waveform, &sig, file, sample_handler);
+	t_end = clock();
+
+	if (res < 0) {
 		lame_error("Signal generation failed");
 		wav_file_close(file);
 
@@ -139,7 +147,7 @@ int main(int argc, char *argv[]) {
 
 	wav_file_close(file);
 
-	printf("\nfin.\n");
+ 	printf("\nfin. %.02lfs elapsed\n", time_clocks_to_s(t_end - t_start));
 
 	return 0;
 }

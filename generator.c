@@ -150,7 +150,7 @@ static int generate_sine(struct signal_desc *sig,
 	double t_multiplier;
 	unsigned int i;
 
-	t_multiplier = signal_t_multiplier(sig);
+	t_multiplier = 2.0 * signal_t_multiplier(sig);
 
 	for (i = 0; i < count; i++)
 		*(samples + i) = wave_sine(t_multiplier * (i + offset));
@@ -164,7 +164,7 @@ static int generate_square(struct signal_desc *sig,
 	double t_multiplier;
 	unsigned int i;
 
-	t_multiplier = signal_t_multiplier(sig);
+	t_multiplier = 2.0 * signal_t_multiplier(sig);
 
 	for (i = 0; i < count; i++)
 		*(samples + i) = wave_square(t_multiplier * (i + offset));
@@ -178,7 +178,7 @@ static int generate_triangle(struct signal_desc *sig,
 	double t_multiplier;
 	unsigned int i;
 
-	t_multiplier = signal_t_multiplier(sig);
+	t_multiplier = 4.0 * signal_t_multiplier(sig);
 
 	for (i = 0; i < count; i++)
 		*(samples + i) = wave_triangle(t_multiplier * (i + offset));
@@ -192,7 +192,7 @@ static int generate_sawtooth(struct signal_desc *sig,
 	double t_multiplier;
 	unsigned int i;
 
-	t_multiplier = signal_t_multiplier(sig);
+	t_multiplier = 2.0 * signal_t_multiplier(sig);
 
 	for (i = 0; i < count; i++)
 		*(samples + i) = wave_sawtooth(t_multiplier * (i + offset));
