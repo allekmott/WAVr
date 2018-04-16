@@ -57,19 +57,26 @@ struct signal_desc {
 
 /* sample renderer; takes in high resolution samples (doubles) and converts
  * them to lower resolution */
-typedef int (*sample_renderer_t) (double *, void *, unsigned int);
+typedef void (*sample_renderer_t) (double, void *);
+
+/* render samples from double precision float to signal-specific format
+ * @sig		Description of target signal
+ * @raw		Array of raw samples (double precision float)
+ * @count	Number of samples contained within array
+ */
+int render_samples(struct signal_desc *sig, double *raw, unsigned int count);
 
 /* renderers */
-int render_samples_8bit(double *raw, void *rendered, unsigned int count);
-int render_samples_16bit(double *raw, void *rendered, unsigned int count);
-int render_samples_24bit(double *raw, void *rendered, unsigned int count);
-int render_samples_32bit(double *raw, void *rendered, unsigned int count);
+void render_sample_8bit(double raw, void *rendered);
+void render_sample_16bit(double raw, void *rendered);
+void render_sample_24bit(double raw, void *rendered);
+void render_sample_32bit(double raw, void *rendered);
 
 const static sample_renderer_t SAMPLE_RENDERERS[] = {
-	render_samples_8bit,
-	render_samples_16bit,
-	render_samples_24bit,
-	render_samples_32bit
+	render_sample_8bit,
+	render_sample_16bit,
+	render_sample_24bit,
+	render_sample_32bit
 };
 #define signal_renderer(sigp)	\
 		(SAMPLE_RENDERERS[signal_bytes_per_sample((sigp)) - 1])

@@ -82,57 +82,43 @@ void dump_samples(void *samples, unsigned int count,
 	}
 }
 
-int render_samples_8bit(double *raw, void *rendered,
-		unsigned int count) {
-	char *out_samples;
+int render_samples(struct signal_desc *sig, double *raw, unsigned int count) {
+	size_t sample_size;
+	sample_renderer_t renderer;
+
+	/* should have anything with sub-byte samples (yet) */
+	char *samples;
+
 	unsigned int i;
 
-	out_samples = (char *) rendered;
-	for (i = 0; i < count; i++)
-		*(out_samples + i) = (char) ((*(raw + i) + 1.0) * (double) SCHAR_MAX);
+	samples = (char *) raw;
+	sample_size = signal_bytes_per_sample(sig);
 
-	return 0;
-}
+	renderer = signal_renderer(sig);
 
-int render_samples_16bit(double *raw, void *rendered,
-		unsigned int count) {
-	short *out_samples;
-	unsigned int i;
-
-	/* 16bit -> short */
-	out_samples = (short *) rendered;
-	for (i = 0; i < count; i++)
-		*(out_samples + i) = (short) ((*(raw + i)) * (double) SHRT_MAX);
-
-	return 0;
-}
-
-int render_samples_24bit(double *raw, void *rendered,
-		unsigned int count) {
-	char *out_samples;
-	unsigned int i;
-	int i_val;
-
-	out_samples = (char *) rendered;
 	for (i = 0; i < count; i++) {
-		/* since 24-bit isn't symmetric, this one's a bit weird */
-		i_val = (int) ((*(raw + i)) * (double) WAVR_INT24_MAX);
-
-		/* copy lower three bytes of in into buffer */
-		memcpy((rendered + (i * 3)), &i_val, sizeof(char) * 3);
+		renderer(*(raw + i), (void *) samples);
+		samples += sample_size;
 	}
 
 	return 0;
 }
 
-int render_samples_32bit(double *raw, void *rendered,
-		unsigned int count) {
-	int *out_samples;
-	unsigned int i;
+void render_sample_8bit(double raw, void *rendered) {
+	*((char *) rendered) = (char) ((raw + 1.0) * (double) SCHAR_MAX);
+}
 
-	out_samples = (int *) rendered;
-	for (i = 0; i < count; i++)
-		*(out_samples + i) = (int) ((*(raw + i)) * (double) INT_MAX);
+void render_sample_16bit(double raw, void *rendered) {
+	*((short *) rendered) = (short) (raw * (double) SHRT_MAX);
+}
 
-	return 0;
+void render_sample_24bit(double raw, void *rendered) {
+	int val;
+
+	val = (int) (raw * (double) WAVR_INT24_MAX);
+	memcpy(rendered, &val, sizeof(char) * 3);
+}
+
+void render_sample_32bit(double raw, void *rendered) {
+	*((int *) rendered) = (int) (raw * (double) INT_MAX);
 }
