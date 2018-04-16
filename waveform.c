@@ -5,9 +5,12 @@
  * @brief	Implementations of basic waveform functions
  */
 
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <math.h>
+#include <float.h>
+#include <limits.h>
 
 #include "waveform.h"
 
@@ -68,4 +71,18 @@ double wave_func_triangle(double t) {
 
 double wave_func_sawtooth(double t) {
 	return fmod((2.0 * t), 2.0) - 1.0;
+}
+
+double wave_func_tangent(double t) {
+	double val;
+
+	/* FIXME: pretty sure this isn't correct cycle-wise */
+	val = tan(M_PI * t) / (2 * M_PI);
+
+	if (val > 1.0)
+		return 1.0;
+	else if (val < -1.0)
+		return -1.0;
+	else
+		return val;
 }

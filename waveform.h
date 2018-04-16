@@ -17,6 +17,7 @@ double wave_func_sine(double t);
 double wave_func_square(double t);
 double wave_func_triangle(double t);
 double wave_func_sawtooth(double t);
+double wave_func_tangent(double t);
 
 /* base waveforms */
 enum waveform {
@@ -25,22 +26,25 @@ enum waveform {
 	WAVEFORM_SQUARE,						/* square wave generator */
 	WAVEFORM_TRIANGLE,						/* triangle wave generator */
 	WAVEFORM_SAWTOOTH,
+	WAVEFORM_TANGENT,
 	WAVEFORM_START_VAL	= WAVEFORM_SINE,
-	WAVEFORM_END_VAL	= WAVEFORM_SAWTOOTH
+	WAVEFORM_END_VAL	= WAVEFORM_TANGENT
 };
 
 static const char *WAVEFORM_NAMES[] = {
 	"sine",
 	"square",
 	"triangle",
-	"sawtooth"
+	"sawtooth",
+	"tangent"
 };
 
 static const wave_func_t WAVEFORM_FUNCS[] = {
 	wave_func_sine,
 	wave_func_square,
 	wave_func_triangle,
-	wave_func_sawtooth
+	wave_func_sawtooth,
+	wave_func_tangent
 };
 
 #define waveform_name(waveform) WAVEFORM_NAMES[(waveform) - WAVEFORM_START_VAL]

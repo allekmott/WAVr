@@ -30,6 +30,12 @@ enum sample_rate {
 	SAMPLE_RATE_192K	= 192000
 };
 
+/* parse sample rate from string */
+enum sample_rate str_to_sample_rate(const char *s_sample_rate);
+
+/* parse sample bit depth from string */
+enum sample_bit_depth str_to_bit_depth(const char *s_sample_bit_depth);
+
 struct sample_format {
 	enum sample_bit_depth	bit_depth;		/* bits per sample */
 	enum sample_rate		sample_rate;	/* signal sample rate */
@@ -44,6 +50,10 @@ struct signal_desc {
 };
 
 #define signal_bytes_per_sample(sigp)	((sigp)->format.bit_depth / 8)
+
+/* duration in microseconds, so conversion necessary */
+#define signal_n_samples(sigp)			\
+		(((sigp)->format.sample_rate) * ((sigp)->duration) * 1e-6)
 
 /* sample renderer; takes in high resolution samples (doubles) and converts
  * them to lower resolution */
@@ -63,12 +73,6 @@ const static sample_renderer_t SAMPLE_RENDERERS[] = {
 };
 #define signal_renderer(sigp)	\
 		(SAMPLE_RENDERERS[signal_bytes_per_sample((sigp)) - 1])
-
-/* parse sample rate from string */
-enum sample_rate str_to_sample_rate(const char *s_sample_rate);
-
-/* parse sample bit depth from string */
-enum sample_bit_depth str_to_bit_depth(const char *s_sample_bit_depth);
 
 /* dump samples to stdout */
 void dump_samples(void *samples, unsigned int count,

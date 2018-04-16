@@ -18,7 +18,7 @@
 static int generate_samples(struct signal_desc *sig, wave_func_t wave_func,
 		double *samples, unsigned int count, unsigned int offset);
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE (4096)
 
 /* Generate signal & write to specified file */
 int generate_signal(enum waveform waveform, struct signal_desc *sig,
@@ -41,7 +41,7 @@ int generate_signal(enum waveform waveform, struct signal_desc *sig,
 	rendered_buffer_size = sample_size * BUFFER_SIZE;
 	rendered_samples = calloc(BUFFER_SIZE, sample_size);
 
-	n_total_samples = (sig->format.sample_rate) * (sig->duration) * 1e-6;
+	n_total_samples = signal_n_samples(sig);
 
 	for (i = 0; (i + BUFFER_SIZE) < n_total_samples; i += BUFFER_SIZE) {
 		/* generate samples */

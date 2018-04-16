@@ -20,6 +20,7 @@ Signal:
   - `square`	(**2**) - a square wave
   - `triangle`	(**3**) - a triangle wave
   - `sawtooth`	(**4**) - a sawtooth wave
+  - `tangent`	(**5**) - a tangent wave
 
 - `-f <frequency>`	set desired frequency	(Hz)
 - `-d <duration>`	set desired duration	(s)

@@ -25,7 +25,8 @@ Output Options:\n\
 Generator Options:\n\
 -w <waveform>		Type of waveform to generate, name or value\n\
 \n\
-			sine (1) | square (2) | triangle (3) | sawtooth (4)\n\
+			sine (1) | square (2) | triangle (3) | sawtooth (4) |\n\
+			tangent (5)\n\
 \n\
 -f <frequency>		Frequency of signal to be generated (Hz)\n\
 -d <duration>		Duration of signal to be generated (s)\n\

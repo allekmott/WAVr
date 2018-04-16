@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
 
 	int res;
 	clock_t t_start, t_end;
+	double t_elapsed;
 
 	coolzero(&sig, sizeof(struct signal_desc));
 
@@ -148,7 +149,9 @@ int main(int argc, char *argv[]) {
 
 	wav_file_close(file);
 
- 	printf("\nfin. %.02lfs elapsed\n", time_clocks_to_s(t_end - t_start));
+	t_elapsed = time_clocks_to_s(t_end - t_start);
+ 	printf("\nfin. %.02lfs elapsed (%.02lf samples/s)\n",
+			t_elapsed, (signal_n_samples(&sig) / t_elapsed));
 
 	return 0;
 }
