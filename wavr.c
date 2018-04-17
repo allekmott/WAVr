@@ -51,17 +51,23 @@ int main(int argc, char *argv[]) {
 	waveform		= WAVEFORM_SINE;	/* sine wave */
 
 	sig.frequency 	= 1e6;		/* 1 kHz */
-	sig.amplitude	= INT_MAX;	/* 100% volume */
+	sig.amplitude	= 1.0f;		/* 100% volume */
 	sig.duration	= 1e6;		/* 1 second */
 
 	sig.format.sample_rate	= SAMPLE_RATE_44_1K;	/* 44.1 kHz */
 	sig.format.bit_depth	= SAMPLE_BIT_DEPTH_16;	/* 16-bit signed short */
 
 	/* parse args */
-	while ((flag = getopt(argc, argv, "o:pd:f:ls:b:i:cj:w:h")) != -1) {
+	while ((flag = getopt(argc, argv, "o:pa:d:f:ls:b:i:cj:w:h")) != -1) {
 		switch (flag) {
 			case 'o': output_path = optarg; break;
 			case 'p': dump_samples = 1; break;
+			case 'a':
+				if ((sig.amplitude = str_to_amplitude(optarg)) < 0.0f) {
+					lame("Invalid amplitude value: %s\n", optarg);
+					return EINVAL;
+				}
+				break;
 			case 'd':
 				if (!(sig.duration = str_to_time_us(optarg))) {
 					lame("Invalid duration value: %s\n", optarg);
@@ -74,7 +80,6 @@ int main(int argc, char *argv[]) {
 					return EINVAL;
 				}
 				break;
-			case 'l': /* TODO: reimplement this */	break;
 			case 's':
 				/* sample rate */
 				if (!(sig.format.sample_rate = str_to_sample_rate(optarg))) {
@@ -102,6 +107,7 @@ int main(int argc, char *argv[]) {
 			case 'h':
 				printf("WAVr v%s\n\n%s\n", WAVR_VERSION, WAVR_HELP_MSG);
 				return 0;
+			default: return EINVAL;
 		}
 	}
 	argc -= optind;
@@ -112,6 +118,7 @@ int main(int argc, char *argv[]) {
 	printf("Output file: %s\n\n"
 			"Waveform:    %s\n"
 			"Duration:    %.2f s\n"
+			"Amplitude:   %.2f\n"
 			"Frequency:   %.2f Hz\n"
 			"Sample rate: %.01f kHz\n"
 			"Bit depth:   %i bit\n"
@@ -119,6 +126,7 @@ int main(int argc, char *argv[]) {
 			output_path,
 			waveform_name(waveform),
 			time_us_to_s(sig.duration),
+			sig.amplitude,
 			freq_mhz_to_hz(sig.frequency),
 			sig.format.sample_rate * 1.0e-3,
 			sig.format.bit_depth,

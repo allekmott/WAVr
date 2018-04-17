@@ -37,6 +37,9 @@ enum sample_rate str_to_sample_rate(const char *s_sample_rate);
 /* parse sample bit depth from string */
 enum sample_bit_depth str_to_bit_depth(const char *s_sample_bit_depth);
 
+/* parse amplitude from string */
+float str_to_amplitude(const char *s_amplitude);
+
 struct sample_format {
 	enum sample_bit_depth	bit_depth;		/* bits per sample */
 	enum sample_rate		sample_rate;	/* signal sample rate */
@@ -70,9 +73,6 @@ struct signal_desc {
  * @count	Number of samples contained within array
  */
 int render_samples(struct signal_desc *sig, double *buf, unsigned int count);
-
-#define signal_renderer(sigp)	\
-		(SAMPLE_RENDERERS[signal_bytes_per_sample((sigp)) - 1])
 
 /* dump samples to stdout */
 void dump_samples(void *samples, unsigned int count,

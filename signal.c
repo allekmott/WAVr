@@ -58,6 +58,25 @@ enum sample_bit_depth str_to_bit_depth(const char *s_sample_bit_depth) {
 	}
 }
 
+float str_to_amplitude(const char *s_amplitude) {
+	float n_amplitude;
+
+	if (sscanf(s_amplitude, "%f", &n_amplitude)) {
+		if (n_amplitude < 0.0f) {
+			return -1.0;
+		} else if (n_amplitude > 1.0f) {
+			if (n_amplitude > 100.0f)
+				return -1.0;
+
+			n_amplitude /= 100.0f;
+		}
+
+		return n_amplitude;
+	} else {
+		return -1.0;
+	}
+}
+
 void dump_samples(void *samples, unsigned int count,
 		enum sample_bit_depth bit_depth) {
 	unsigned int i, b, per_line;
@@ -85,30 +104,36 @@ void dump_samples(void *samples, unsigned int count,
 
 int render_samples(struct signal_desc *sig, double *buf, unsigned int count) {
 	char *samples;
-	unsigned int i;
+	float amplitude;
 
 	int val;
+	unsigned int i;
 
 	samples = (char *) buf;
+	amplitude = sig->amplitude;
+
+	/* TODO: figure out a cleaner way of doing this */
 
 	switch (sig->format.bit_depth) {
 		case SAMPLE_BIT_DEPTH_8:
 			/* actually unsigned char, so range is 0-255 vs -126-125 */
 			for (i = 0; i < count; ++i, ++buf, ++samples)
-				*samples = (char) (((*buf) + 1.0) * (double) SCHAR_MAX);
+				*samples = (char) (amplitude *
+						(((*buf) + 1.0) * (double) SCHAR_MAX));
 			break;
 
 		case SAMPLE_BIT_DEPTH_16:
 			/* signed 16-bit short */
 			for (i = 0; i < count; ++i, ++buf, samples += 2)
-				*((short *) samples) = (short) ((*buf) * (double) SHRT_MAX);
+				*((short *) samples) = (short) (amplitude *
+						((*buf) * (double) SHRT_MAX));
 			break;
 
 		case SAMPLE_BIT_DEPTH_24:
 			/* signed 24-bit int
 			 * use a 32-bit int for calculation, then copy only 24-bits */
 			for (i = 0; i < count; ++i, ++buf, samples += 3) {
-				val = (int) ((*buf) * (double) WAVR_INT24_MAX);
+				val = (int) (amplitude * ((*buf) * (double) WAVR_INT24_MAX));
 
 				/* FIXME: this will probably break under big-endian */
 				memcpy(samples, &val, sizeof(char) * 3);
@@ -118,7 +143,8 @@ int render_samples(struct signal_desc *sig, double *buf, unsigned int count) {
 		case SAMPLE_BIT_DEPTH_32:
 			/* not actually 32-bit float (here), but rather signed int */
 			for (i = 0; i < count; ++i, ++buf, samples += 4)
-				*((int *) samples) = (int) ((*buf) * (double) INT_MAX);
+				*((int *) samples) = (int) (amplitude *
+						((*buf) * (double) INT_MAX));
 			break;
 
 		default:

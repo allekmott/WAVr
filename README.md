@@ -22,6 +22,7 @@ Signal:
   - `sawtooth`	(**4**) - a sawtooth wave
   - `tangent`	(**5**) - a tangent wave
 
+- `-a <amplitude>`	Set desired amplitude   (0-100% or 0.0-1.0)
 - `-f <frequency>`	set desired frequency	(Hz)
 - `-d <duration>`	set desired duration	(s)
 

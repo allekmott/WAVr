@@ -77,7 +77,7 @@ double wave_func_tangent(double t) {
 	double val;
 
 	/* FIXME: pretty sure this isn't correct cycle-wise */
-	val = tan(M_PI * t) / (2 * M_PI);
+	val = tan(M_PI * t) / (2.0 * M_PI);
 
 	if (val > 1.0)
 		return 1.0;

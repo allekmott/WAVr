@@ -28,6 +28,7 @@ Generator Options:\n\
 			sine (1) | square (2) | triangle (3) | sawtooth (4) |\n\
 			tangent (5)\n\
 \n\
+-a <amplitude>		Amplitude of signal (% or multiplier between 0 & 1)\n\
 -f <frequency>		Frequency of signal to be generated (Hz)\n\
 -d <duration>		Duration of signal to be generated (s)\n\
 -s <sample_rate>	Sample rate in kHz or Hz\n\
