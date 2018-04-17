@@ -18,7 +18,7 @@
 static int generate_samples(struct signal_desc *sig, wave_func_t wave_func,
 		double *samples, unsigned int count, unsigned int offset);
 
-#define BUFFER_SIZE (4096)
+#define BUFFER_SIZE (4096 << 4)
 
 /* Generate signal & write to specified file */
 int generate_signal(enum waveform waveform, struct signal_desc *sig,

@@ -82,43 +82,47 @@ void dump_samples(void *samples, unsigned int count,
 	}
 }
 
-int render_samples(struct signal_desc *sig, double *raw, unsigned int count) {
-	size_t sample_size;
-	sample_renderer_t renderer;
-
-	/* should have anything with sub-byte samples (yet) */
+int render_samples(struct signal_desc *sig, double *buf, unsigned int count) {
 	char *samples;
-
 	unsigned int i;
 
-	samples = (char *) raw;
-	sample_size = signal_bytes_per_sample(sig);
+	int val;
 
-	renderer = signal_renderer(sig);
+	samples = (char *) buf;
 
-	for (i = 0; i < count; i++) {
-		renderer(*(raw + i), (void *) samples);
-		samples += sample_size;
+	switch (sig->format.bit_depth) {
+		case SAMPLE_BIT_DEPTH_8:
+			/* actually unsigned char, so range is 0-255 vs -126-125 */
+			for (i = 0; i < count; ++i, ++buf, ++samples)
+				*samples = (char) (((*buf) + 1.0) * (double) SCHAR_MAX);
+			break;
+
+		case SAMPLE_BIT_DEPTH_16:
+			/* signed 16-bit short */
+			for (i = 0; i < count; ++i, ++buf, samples += 2)
+				*((short *) samples) = (short) ((*buf) * (double) SHRT_MAX);
+			break;
+
+		case SAMPLE_BIT_DEPTH_24:
+			/* signed 24-bit int
+			 * use a 32-bit int for calculation, then copy only 24-bits */
+			for (i = 0; i < count; ++i, ++buf, samples += 3) {
+				val = (int) ((*buf) * (double) WAVR_INT24_MAX);
+
+				/* FIXME: this will probably break under big-endian */
+				memcpy(samples, &val, sizeof(char) * 3);
+			}
+			break;
+
+		case SAMPLE_BIT_DEPTH_32:
+			/* not actually 32-bit float (here), but rather signed int */
+			for (i = 0; i < count; ++i, ++buf, samples += 4)
+				*((int *) samples) = (int) ((*buf) * (double) INT_MAX);
+			break;
+
+		default:
+			break;
 	}
 
 	return 0;
-}
-
-void render_sample_8bit(double raw, void *rendered) {
-	*((char *) rendered) = (char) ((raw + 1.0) * (double) SCHAR_MAX);
-}
-
-void render_sample_16bit(double raw, void *rendered) {
-	*((short *) rendered) = (short) (raw * (double) SHRT_MAX);
-}
-
-void render_sample_24bit(double raw, void *rendered) {
-	int val;
-
-	val = (int) (raw * (double) WAVR_INT24_MAX);
-	memcpy(rendered, &val, sizeof(char) * 3);
-}
-
-void render_sample_32bit(double raw, void *rendered) {
-	*((int *) rendered) = (int) (raw * (double) INT_MAX);
 }
