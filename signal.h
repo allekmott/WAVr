@@ -17,7 +17,8 @@ enum sample_bit_depth {
 	SAMPLE_BIT_DEPTH_16			= 16,
 	SAMPLE_BIT_DEPTH_24			= 24,
 	SAMPLE_BIT_DEPTH_32			= 32,
-	SAMPLE_BIT_DEPTH_START_VAL	= SAMPLE_BIT_DEPTH_8
+	SAMPLE_BIT_DEPTH_START_VAL	= SAMPLE_BIT_DEPTH_8,
+	SAMPLE_BIT_DEPTH_END_VAL	= SAMPLE_BIT_DEPTH_32
 };
 
 enum sample_rate {
@@ -55,6 +56,13 @@ struct signal_desc {
 #define signal_n_samples(sigp)			\
 		(((sigp)->format.sample_rate) * ((sigp)->duration) * 1e-6)
 
+/* calculate signal size in bytes */
+#define signal_size_bytes(sigp) \
+		((unsigned long) (((sigp)->duration)	*	\
+			((sigp)->format.sample_rate)		* 	\
+			signal_bytes_per_sample((sigp))		*	\
+			1.0e-6))
+
 /* render samples from double precision float to signal-specific format
  * @sig		Description of target signal
  * @buf		Array of raw samples (double precision float).
@@ -69,12 +77,5 @@ int render_samples(struct signal_desc *sig, double *buf, unsigned int count);
 /* dump samples to stdout */
 void dump_samples(void *samples, unsigned int count,
 		enum sample_bit_depth bit_depth);
-
-/* calculate signal size in bytes */
-#define signal_size_bytes(sigp) \
-		((unsigned long) (((sigp)->duration)	*	\
-			((sigp)->format.sample_rate)		* 	\
-			signal_bytes_per_sample((sigp))		*	\
-			1.0e-6))
 
 #endif /* __WAVR_SIGNAL_H__ */

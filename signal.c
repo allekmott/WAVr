@@ -48,12 +48,13 @@ enum sample_bit_depth str_to_bit_depth(const char *s_sample_bit_depth) {
 	if (!sscanf(s_sample_bit_depth, "%i", &n_sample_bit_depth))
 		return SAMPLE_BIT_DEPTH_INVAL;
 
-	switch (n_sample_bit_depth) {
-		case SAMPLE_BIT_DEPTH_8:	return SAMPLE_BIT_DEPTH_8;
-		case SAMPLE_BIT_DEPTH_16:	return SAMPLE_BIT_DEPTH_16;
-		case SAMPLE_BIT_DEPTH_24:	return SAMPLE_BIT_DEPTH_24;
-		case SAMPLE_BIT_DEPTH_32:	return SAMPLE_BIT_DEPTH_32;
-		default:					return SAMPLE_BIT_DEPTH_INVAL;
+	if (!(n_sample_bit_depth % 8 == 0)) {
+		return SAMPLE_BIT_DEPTH_INVAL;
+	} else if (n_sample_bit_depth < SAMPLE_BIT_DEPTH_START_VAL ||
+			n_sample_bit_depth > SAMPLE_BIT_DEPTH_END_VAL) {
+		return SAMPLE_BIT_DEPTH_INVAL;
+	} else {
+		return n_sample_bit_depth;
 	}
 }
 
